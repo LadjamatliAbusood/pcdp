@@ -1,0 +1,33 @@
+/* MENU PANEL */
+.menu-panel {
+    background-color: var(--p-primary-500) !important;
+    color: white !important;
+}
+
+.menu-panel .p-menuitem-link:hover {
+    background-color: var(--p-primary-600) !important;
+}
+
+/* BUTTON */
+.btn-root {
+    background-color: var(--p-primary-500) !important;
+    border-color: var(--p-primary-600) !important;
+    color: white !important;
+}
+
+.btn-root:hover {
+    background-color: var(--p-primary-600) !important;
+}
+
+/* INPUT */
+.input-root:focus,
+.input-root.p-inputtext:focus {
+    border-color: var(--p-primary-500) !important;
+    box-shadow: 0 0 0 1px var(--p-primary-500) !important;
+}
+
+/* DIALOG HEADER */
+.dialog-header {
+    background-color: var(--p-primary-600) !important;
+    color: white !important;
+}

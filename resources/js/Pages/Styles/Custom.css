@@ -1,0 +1,21 @@
+/* Add this to your global styles or inside your component's <style scoped> */
+
+:root {
+  --p-menu-background: #1E40AF; /* Blue background */
+  --p-menu-color: white; /* White text */
+  --p-menu-border-radius: 0.375rem; /* Optional: border radius */
+}
+
+.p-menu {
+  background-color: var(--p-menu-background) !important;
+  color: var(--p-menu-color) !important;
+  border-radius: var(--p-menu-border-radius) !important;
+}
+
+.p-menu-item {
+  color: var(--p-menu-color) !important;
+}
+
+.p-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important; /* Optional: hover effect */
+}
