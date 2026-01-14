@@ -2,107 +2,50 @@
 import { defineProps, ref, computed } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
-import Tag from "primevue/tag";
 import Tabs from "primevue/tabs";
 import TabList from "primevue/tablist";
 import Tab from "primevue/tab";
 import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
-import Badge from "primevue/badge";
 import TextInputField from "@/Components/TextInputField.vue";
 import ClientRecordsDrawer from "./ClientRecordsDrawer.vue";
 import { useClientHelpers } from "@/Constant/useClientHelpers";
+import CategoryTag from "@/Components/CategoryTag.vue";
 
-const { getSexLabel } = useClientHelpers();
+const { getSexLabel,formatDate } = useClientHelpers();
 
 const props = defineProps({
     clients: Array,
 });
 
-const activeIndex = ref("All");
+// ONLY 2 TAB VALUES
+const activeIndex = ref("client");
 const drawerVisible = ref(false);
 const selectedRow = ref(null);
 const searchQuery = ref("");
 
-// GROUPING LOGIC: Merge same Case No into 1 row and count categories
-const flattenedRows = computed(() => {
-    const grouped = {};
-
-    props.clients.forEach((client) => {
-        client.client_caseno?.forEach((caseno) => {
-            const key = caseno.case_no;
-
-            if (!grouped[key]) {
-                grouped[key] = {
-                    ...client,
-                    display_case_no: caseno.case_no,
-                    category_count: caseno.category_case?.length || 0,
-                    // Collect all category objects for the drawer to display
-                    all_category_cases: [...(caseno.category_case || [])],
-                    // For the Tab filtering
-                    all_categories_names:
-                        caseno.category_case?.map(
-                            (c) => c.client_category?.category
-                        ) || [],
-                    latest_date: caseno.created_at,
-                };
-            } else {
-                // If same case_no exists, sum the category count
-                grouped[key].category_count +=
-                    caseno.category_case?.length || 0;
-
-                // Add the category objects to the master list for this case
-                if (caseno.category_case) {
-                    grouped[key].all_category_cases.push(
-                        ...caseno.category_case
-                    );
-
-                    // Update the string array for filtering
-                    caseno.category_case.forEach((c) => {
-                        const name = c.client_category?.category;
-                        if (
-                            name &&
-                            !grouped[key].all_categories_names.includes(name)
-                        ) {
-                            grouped[key].all_categories_names.push(name);
-                        }
-                    });
-                }
-            }
-        });
-    });
-
-    return Object.values(grouped);
-});
-
-const categories = computed(() => {
-    const list = new Set();
-    flattenedRows.value.forEach((row) => {
-        row.all_categories_names.forEach((cat) => list.add(cat));
-    });
-    return ["All", ...Array.from(list)];
-});
+const generalRows = computed(() =>
+    props.clients.flatMap(client =>
+        client.all_category_cases.map(c => ({
+            ...client,
+            single_category: c.category,
+            json_data: c,       // Full JSON data for drawer
+            created_at: c.created_at
+        }))
+    ).sort((a,b)=>new Date(b.created_at) - new Date(a.created_at))
+);
 
 const filteredRows = computed(() => {
-    let data = flattenedRows.value;
+    let data = props.clients;
+    if(activeIndex.value==='general') data = data.filter(row=>row.all_categories_names.includes('General Intake'));
 
-    if (activeIndex.value !== "All") {
-        data = data.filter((row) =>
-            row.all_categories_names.includes(activeIndex.value)
+    if(searchQuery.value){
+        const q = searchQuery.value.toLowerCase();
+        data = data.filter(row => 
+            `${row.raw_client_data.lastname} ${row.raw_client_data.firstname}`.toLowerCase().includes(q) ||
+            row.display_case_no.toLowerCase().includes(q)
         );
     }
-
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        data = data.filter((row) => {
-            const fullName = `${row.lastname} ${row.firstname}`.toLowerCase();
-            return (
-                fullName.includes(query) ||
-                row.display_case_no.toLowerCase().includes(query)
-            );
-        });
-    }
-
     return data;
 });
 
@@ -110,69 +53,169 @@ const onRowClick = (event) => {
     selectedRow.value = event.data;
     drawerVisible.value = true;
 };
+
+
+
 </script>
 
 <template>
     <div class="w-full space-y-4">
         <Tabs v-model:value="activeIndex">
+
+            <!-- TAB LIST (ONLY 2 TABS) -->
             <TabList>
-                <Tab v-for="cat in categories" :key="cat" :value="cat">{{
-                    cat
-                }}</Tab>
+                <Tab value="client">
+                    <span :class="[
+                        'flex items-center gap-1 text-sm transition-colors',
+                        activeIndex === 'client'
+                            ? 'text-blue-800'
+                            : 'text-gray-500 hover:text-gray-700'
+                    ]">
+                        All Client
+                    </span>
+                </Tab>
+
+                <Tab value="general">
+                    <span :class="[
+                        'flex items-center gap-1 text-sm transition-colors',
+                        activeIndex === 'general'
+                            ? 'text-blue-800'
+                            : 'text-gray-500 hover:text-gray-700'
+                    ]">
+                        All General Intakes
+                    </span>
+                </Tab>
+
             </TabList>
 
+            <!-- TAB PANELS -->
             <TabPanels>
-                <TabPanel v-for="cat in categories" :key="cat" :value="cat">
-                    <div
-                        class="bg-white p-4 rounded-lg shadow-md border border-gray-100"
-                    >
-                        <div class="flex justify-between mb-4 items-center">
-                            <h2 class="text-lg font-bold">
-                                {{ cat }} Case Records
-                            </h2>
-                            <div class="w-64">
-                                <TextInputField
-                                    v-model="searchQuery"
-                                    placeholder="Search..."
-                                />
+                <TabPanel value="client">
+                    <div class="">
+                        <div class="flex ">
+                            <div class="ml-auto w-64">
+                                <TextInputField v-model="searchQuery" placeholder="Search..." />
                             </div>
                         </div>
 
-                        <DataTable
-                            :value="filteredRows"
-                            @row-click="onRowClick"
-                            selectionMode="single"
-                            class="p-datatable-sm text-sm w-full"
-                        >
-                            <Column
-                                field="display_case_no"
-                                header="Case Number"
-                            />
-                            <Column header="Client's Full Name">
-                                <template #body="{ data }">
-                                    {{ data.lastname }}, {{ data.firstname }}
-                                    {{ data.middlename }}
-                                </template>
-                            </Column>
-                            <Column header="Sex">
-                                <template #body="{ data }">
-                                    {{ getSexLabel(data.sex) }}
-                                </template>
-                            </Column>
-                            <Column header="No. of Deportation">
-                                <template #body="{ data }">
-                                    {{ data.category_count }}
-                                </template>
-                            </Column>
-                        </DataTable>
+                       <DataTable 
+    :value="filteredRows" 
+    @row-click="onRowClick" 
+    selectionMode="single"
+    class="p-datatable-sm text-sm w-full"
+>
+    <Column field="display_case_no" header="Case Number" />
+
+    <Column header="Client's Name">
+        <template #body="{ data }">
+            <div class="px-2 py-1">
+                {{ data.raw_client_data.lastname }}, {{ data.raw_client_data.firstname }} {{ data.raw_client_data.middlename }}
+                {{ data.raw_client_data.extensionname }}
+            </div>
+        </template>
+    </Column>
+
+    <Column header="Sex">
+        <template #body="{ data }">
+            <div class="px-2 py-1">
+                {{ getSexLabel(data.raw_client_data.sex) }}
+            </div>
+        </template>
+    </Column>
+
+    <Column header="No. of Deportation">
+        <template #body="{ data }">
+            <div class="px-2 py-1">
+                {{ data.category_count }}
+            </div>
+        </template>
+    </Column>
+
+   
+</DataTable>
+
                     </div>
                 </TabPanel>
+
+
+
+
+
+
+
+
+<TabPanel value="general">
+    <div class="flex flex-col overflow-hidden h-auto lg:h-[440px]">
+
+        <!-- SEARCH -->
+        <div class="flex justify-end mb-2 shrink-0">
+            <div class="w-full sm:w-64">
+                <TextInputField
+                    v-model="searchQuery"
+                    placeholder="Search..."
+                />
+            </div>
+        </div>
+
+        <!-- TABLE WRAPPER (HORIZONTAL SCROLL ON MOBILE) -->
+        <div class="flex-1 overflow-x-auto">
+            <DataTable
+                :value="generalRows"
+                @row-click="onRowClick"
+                selectionMode="single"
+                class="p-datatable-sm text-sm min-w-[800px]"
+                paginator
+                :rows="10"
+                :rowsPerPageOptions="[10, 20, 30, 50]"
+                paginatorTemplate="RowsPerPageDropdown CurrentPageReport PrevPageLink PageLinks NextPageLink"
+                currentPageReportTemplate="Showing {first}–{last} of {totalRecords}"
+                removableSort
+                scrollable
+                scrollHeight="flex"
+            >
+                <Column field="display_case_no" header="Case Number" sortable />
+
+                <Column header="Client's Name">
+                    <template #body="{ data }">
+                        {{ data.raw_client_data.lastname }}, {{ data.raw_client_data.firstname }} {{ data.raw_client_data.middlename }}
+                {{ data.raw_client_data.extensionname }}
+                    </template>
+                </Column>
+
+                <!-- HIDE ON SMALL -->
+                <Column header="Sex" class="hidden md:table-cell">
+                    <template #body="{ data }">
+                           {{ getSexLabel(data.raw_client_data.sex) }}
+                    </template>
+                </Column>
+
+                <Column header="Date Encoded" sortable field="created_at">
+        <template #body="{ data }">
+            <div class="px-2 py-1">
+                  {{ formatDate(data.created_at) }}
+            </div>
+        </template>
+    </Column>
+
+                <!-- HIDE ON VERY SMALL -->
+                <Column header="Category" class="hidden sm:table-cell">
+                    <template #body="{ data }">
+                        <CategoryTag
+                            :value="data.single_category"
+                            severity="secondary"
+                        />
+                    </template>
+                </Column>
+            </DataTable>
+        </div>
+
+    </div>
+</TabPanel>
+
+
             </TabPanels>
         </Tabs>
 
-        <ClientRecordsDrawer
-            v-model:visible="drawerVisible"
-            :rowData="selectedRow"
-        />
+        <ClientRecordsDrawer v-model:visible="drawerVisible" :rowData="selectedRow" />
     </div>
 </template>

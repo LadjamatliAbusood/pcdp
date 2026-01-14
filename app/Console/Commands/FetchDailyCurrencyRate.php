@@ -28,7 +28,7 @@ class FetchDailyCurrencyRate extends Command
     public function handle()
     {
         $today = Carbon::today();
-     
+       
 
         if(
             CurrencyRateModel::whereDate('rate_date', $today)

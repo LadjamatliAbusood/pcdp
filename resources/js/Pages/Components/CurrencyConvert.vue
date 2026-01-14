@@ -30,10 +30,10 @@ const currencyOptions = Object.keys(currencyData).map(code => ({
   name: currencyData[code].name
 }));
 
-// Fetch rate from Laravel backend once when component mounts
+
 const fetchRate = async () => {
   try {
-    const res = await axios.get('/currency/rate'); // Laravel endpoint
+    const res = await axios.get('/currency/rate'); 
     exchangeRate.value = res.data.rate || 0;
     convert(selectedCurrency.value);
   } catch (error) {

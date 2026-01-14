@@ -84,15 +84,16 @@ class IdentifyingInformationController extends Controller
             'id_presented' => ['required', 'max:225'],
             'length_stay_in_malaysia' => ['required', 'max:225'],
             'length_stay_in_malaysia_options' => ['required', 'in:1,2,3,4'],
+            
             'additional_length_option_if_with_years' => [
                 'nullable',
-                'required_if:length_stay_in_malaysia_options,4',
+                // 'required_if:length_stay_in_malaysia_options,4',
                 'in:2,3',
             ],
 
             'length_value_if_with_years' => [
                 'nullable',
-                'required_if:length_stay_in_malaysia_options,4',
+                // 'required_if:length_stay_in_malaysia_options,4',
                 'integer',
                 'min:1',
             ],
