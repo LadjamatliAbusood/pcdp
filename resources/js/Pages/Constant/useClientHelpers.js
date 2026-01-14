@@ -76,6 +76,7 @@ export function useClientHelpers() {
             : "N/A";
     
     };
+
     return {
         getSexLabel,
         formatDate,
@@ -83,6 +84,6 @@ export function useClientHelpers() {
         shortformatDate,
         getEducationOptions,
         getDurationInMalaysia,
-        ClientPlan
+        ClientPlan,
     };
 }

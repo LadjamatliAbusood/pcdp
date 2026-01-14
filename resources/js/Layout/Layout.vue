@@ -1,4 +1,5 @@
 <script setup>
+document.title = "FOIX PCDP ";
 import Menu from 'primevue/menu';
 import 'primeicons/primeicons.css';
 import { ref, computed } from "vue";
@@ -72,8 +73,16 @@ const adminMenu = ref([
 },
   { label: "Settings", 
   icon: "pi pi-cog", 
-  to: "/data-settings" },
+  
+  to: route('client-idpresented.index')
+  
+ 
+
+},
 ]);
+
+// to: route('client-type.index')
+//to: "/data-settings"
 
 const systemMenu = ref([
   { label: "System Status", 
@@ -100,7 +109,7 @@ const userMenuItems = [
 </script>
 
 <template>
-  <div class="flex h-screen  ">
+  <div class="flex h-screen  overflow-hidden">
     <!-- SIDEBAR -->
     <aside class="w-62 bg-blue-900 text-white flex flex-col p-4">
       <div class="flex flex-col items-center gap-2 mb-3 w-fit">
@@ -147,7 +156,8 @@ const userMenuItems = [
     </aside>
 
     <!-- MAIN CONTENT AREA -->
-    <section class="flex-1 flex flex-col bg-gray-100">
+    <section class="flex-1 flex flex-col bg-gray-100 overflow-hidden">
+
       <!-- TOP BAR -->
       <header class="h-14 shadow bg-white flex justify-between items-center px-4">
 

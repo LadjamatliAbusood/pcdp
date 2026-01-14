@@ -38,7 +38,7 @@ watch(() => props.currentPage, (newPage) => {
 const onPageChange = (event) => {
   first.value = event.first;
   emit('update:page', {
-    page: event.page + 1, // Laravel pages are 1-based
+    page: event.page + 1, 
     rows: event.rows,
     first: event.first
   });

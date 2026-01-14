@@ -12,6 +12,7 @@ use App\Http\Controllers\FingerprintController;
 use App\Http\Controllers\IDPresentedController;
 use App\Http\Controllers\ClientRecordsController;
 use App\Http\Controllers\ClientCategoryController;
+use App\Http\Controllers\ClientRecordsGenIntakesController;
 use App\Http\Controllers\IdentifyingInformationController;
 use App\Models\CurrencyRateModel;
 
@@ -66,11 +67,11 @@ Route::get('/overview', function () {
 })->name('overview');
 
 
-Route::get('/data-settings', function () {
-    return Inertia::render('Superadmin/DataSettings/Main',[
-        'title' => 'Settings'
-    ]); 
-})->name('data-settings');
+// Route::get('/data-settings', function () {
+//     return Inertia::render('Superadmin/DataSettings/Main',[
+//         'title' => 'Settings'
+//     ]); 
+// })->name('data-settings');
 
 
 Route::prefix('client-category')->group(function () {
@@ -91,15 +92,16 @@ Route::prefix('client-idpresented')->group(function () {
 
 
 Route::prefix('client-type')->group(function () {
+   
     Route::get('/', [ClientTypeController::class, 'index'])->name('client-type.index');
     Route::post('/', [ClientTypeController::class, 'store'])->name('client-type.store');
     Route::put('/{id}', [ClientTypeController::class, 'update'])->name('client-type.update');
-     Route::get('/clienttype', [ClientTypeController::class, 'getClienttype'])->name('client-type.clienttype');
-     
 });
 
 
 Route::get('/client-records',[ClientRecordsController::class,'index'])->name('client-records.index');
+Route::get('/client-recordsGenIntake',[ClientRecordsGenIntakesController::class,'index'])->name('client-recordsGenIntake.index');
+
 
 Route::post('/validate-step/{step}', [IdentifyingInformationController::class, 'validateStep'])
     ->name('validate-step');

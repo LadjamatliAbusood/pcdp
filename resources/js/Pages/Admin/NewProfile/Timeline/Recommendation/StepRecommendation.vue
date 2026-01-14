@@ -26,7 +26,7 @@ const Interventionoptions = [
     { label: 'Skills Training', value: 'Skills Training' },
     { label: 'Temporary Shelter', value: 'Temporary Shelter' },
     { label: 'Documentation Services', value: 'Documentation Services' },
-    { label: 'Foreign/Local Employement', value: 'Foreign/Local Employementr' },
+    { label: 'Foreign/Local Employement', value: 'Foreign/Local Employement' },
     { label: 'Capital Assistance', value: 'Capital Assistance' },
     { label: 'Medical Assistance', value: 'Medical Assistance' },
    
