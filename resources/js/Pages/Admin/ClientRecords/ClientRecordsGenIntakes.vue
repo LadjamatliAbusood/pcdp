@@ -21,6 +21,7 @@ const props = defineProps({
     clients: Object,
     filters: Object,
     searchTerm: String,
+    categories: Array,
 });
 
 
@@ -30,20 +31,7 @@ const searchQueryGeneral = ref(props.searchTerm);
 const selectedCategories = ref([]);
 
 
-const categoryOptions = computed(() => {
-    const set = new Set();
-
-    (props.clients?.data || []).forEach(client => {
-        client.all_category_cases.forEach(c => {
-            if (c.category) set.add(c.category);
-        });
-    });
-
-    return [...set].map(c => ({
-        label: c,
-        value: c,
-    }));
-});
+const categoryOptions = computed(() => props.categories ?? []);
 
 
 const generalRows = computed(() => {

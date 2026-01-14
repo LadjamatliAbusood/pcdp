@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientCategoryModel;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\ClientInfoModel;
@@ -48,6 +49,16 @@ class ClientRecordsGenIntakesController extends Controller
             'query' => $request->query(), // ✅ safe: uses current request query
         ]
     );
+    $allCategories = ClientCategoryModel::query()
+        ->where('status', 1)
+        ->orderBy('category')
+    ->distinct()
+    ->pluck('category')
+    ->map(fn ($c) => [
+        'label' => $c,
+        'value' => $c,
+    ])
+    ->values();
 
     return Inertia::render('Admin/ClientRecords/ClientRecordsGenIntakes', [
         'title' => 'All General Intakes Records',
@@ -57,6 +68,7 @@ class ClientRecordsGenIntakesController extends Controller
             'per_page' => $perPage,
         ],
         'searchTerm'=>$request->search,
+        'categories' => $allCategories,
     ]);
     }
 
