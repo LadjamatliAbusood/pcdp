@@ -37,3 +37,13 @@ export const relationshipOptions = [
     
 
 ];
+
+
+  export  const dataHealth = [
+  { label: 'No Complaint', value: 'No Complaint', color: '#475569' },
+  { label: 'Social Services Section', value: 'Social Services Section', color: '#f59e0b' },
+  { label: 'Medical Section', value: 'Medical Section', color: '#3b82f6' },
+  { label: 'Psychological Section', value: 'Psychological Section', color: '#84cc16' },
+  { label: 'Productivity Services Section', value: 'Productivity Services Section', color: '#a855f7' },
+  { label: 'Homelife Section', value: 'Homelife Section', color: '#b45309' },
+];

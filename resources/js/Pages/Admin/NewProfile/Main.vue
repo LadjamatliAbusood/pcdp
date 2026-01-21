@@ -56,6 +56,10 @@ const form = useForm({
     estimated_income_local: null,
     estimated_code: 'PHP',
 
+    photo_front: null,
+    photo_left: null,
+    photo_right: null,
+
     family_members: [],
 
     client_category_id: null,

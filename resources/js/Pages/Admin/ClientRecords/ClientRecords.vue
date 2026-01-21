@@ -126,9 +126,9 @@ const tableRows = computed(() => props.clients?.data || []);
           scrollable
           scrollHeight="flex"
         >
-          <Column field="display_case_no" header="Case Number" sortable />
+          <Column field="display_case_no" header="Case Number" sortable class="whitespace-nowrap"/>
 
-          <Column header="Client's Name">
+          <Column header="Client's Name" class="whitespace-nowrap">
             <template #body="{ data }">
               {{ data.latest_client_info?.lastname }},
               {{ data.latest_client_info?.firstname }}
@@ -143,13 +143,13 @@ const tableRows = computed(() => props.clients?.data || []);
             </template>
           </Column>
 
-          <Column header="No. of Deportation">
+          <Column header="No. of Deportation" class="whitespace-nowrap">
             <template #body="{ data }">
               <div class="px-2 py-1">{{ data.category_count }}</div>
             </template>
           </Column>
 
-          <Column header="Length of Stay">
+          <Column header="Length of Stay" class="whitespace-nowrap">
             <template #body="{ data }">
               <span class="px-2 py-1">{{ getTotalStay(data) }}</span>
             </template>

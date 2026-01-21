@@ -18,12 +18,12 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    
+        protected $connection = 'hrmis_db';
     protected $fillable = [
        
         'email',
         'password',
-        'role',
+      
     ];
 
     /**
@@ -49,8 +49,8 @@ class User extends Authenticatable
         ];
     }
 
-       public function info()
-    {
-        return $this->hasOne(user_infos::class);
-    }
+    //    public function info()
+    // {
+    //     return $this->hasOne(user_infos::class);
+    // }
 }

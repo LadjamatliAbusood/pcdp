@@ -10,7 +10,8 @@ import PasswordField from "@/Components/PasswordField.vue";
 import TextInputField from "@/Components/TextInputField.vue";
 import { Inertia } from "@inertiajs/inertia";
 import InputText from "primevue/inputtext";
-import DSWD_BG from "../../../../public/storage/imgs/dswd_bagong_pilipinas_logo.svg"
+import dswd_logo from "@/assets/dswd_bagong_pilipinas_logo.svg"
+import bgdswd from "@/assets/bg-dswd.jpg"
 defineOptions({ layout: null });
 
 const generalError = ref("");
@@ -38,7 +39,7 @@ const submit = () => {
         >
             <div class="absolute top-4 left-4 md:top-6 md:left-6">
                 <img
-                    :src="DSWD_BG"
+                    :src="dswd_logo"
                     class="h-10 md:h-14"
                 />
             </div>
@@ -92,7 +93,7 @@ const submit = () => {
                 class="relative w-full h-[80%] rounded-2xl overflow-hidden shadow-lg"
             >
                 <img
-                    src="/public/storage/imgs/bg-dswd.jpg"
+                   :src="bgdswd"
                     class="object-cover w-full h-full brightness-50"
                 />
                 <div class="absolute bottom-10 left-10 text-white">

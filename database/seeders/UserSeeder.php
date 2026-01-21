@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
                 'position' => 'CP III',
                 'email' => 'superadmin@gmail.com',
                 'password' => Hash::make('password'),
-                'role' => 1,
+                // 'role' => 1,
 
             ],
             [
@@ -39,7 +39,7 @@ class UserSeeder extends Seeder
                 'position' => 'CP III',
                 'email' => 'admin@gmail.com',
                 'password'=> Hash::make('password'),
-                'role'=> 2,
+                // 'role'=> 2,
             ],
 
             [
@@ -52,7 +52,7 @@ class UserSeeder extends Seeder
             'position' => 'CP III',
             'email' => 'user@gmail.com',
             'password'=> Hash::make('password'),
-            'role'=> 3,
+            // 'role'=> 3,
             ],
            
             
@@ -65,23 +65,23 @@ class UserSeeder extends Seeder
         [
             'email' => $userData['email'],
             'password' => $userData['password'],
-            'role' => $userData['role']
+            // 'role' => $userData['role']
         ]
     );
 
     // Create user_infos entry
-    user_infos::updateOrCreate(
-        ['user_id' => $user->id],
-        [
-            'nickname' => $userData['nickname'],
-            'first_name' => $userData['first_name'],
-            'middle_name' => $userData['middle_name'],
-            'last_name' => $userData['last_name'],
-            'ext_name' => $userData['ext_name'],
-            'contact_number' => $userData['contact_number'],
-            'position' => $userData['position'],
-        ]
-    );
+    // user_infos::updateOrCreate(
+    //     ['user_id' => $user->id],
+    //     [
+    //         'nickname' => $userData['nickname'],
+    //         'first_name' => $userData['first_name'],
+    //         'middle_name' => $userData['middle_name'],
+    //         'last_name' => $userData['last_name'],
+    //         'ext_name' => $userData['ext_name'],
+    //         'contact_number' => $userData['contact_number'],
+    //         'position' => $userData['position'],
+    //     ]
+    // );
 }
 
     }

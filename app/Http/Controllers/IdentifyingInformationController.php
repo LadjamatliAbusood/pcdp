@@ -54,11 +54,16 @@ class IdentifyingInformationController extends Controller
             'estimated_code_currency' => ['nullable', 'max:225'],
             'estimated_income_local' => ['required', 'max:225'],
             'estimated_code' => ['nullable', 'max:225'],
+
+            'photo_front' => ['file', 'required', 'max:5120'], 
+            'photo_left' => ['file', 'nullable', 'max:5120'],
+            'photo_right' => ['file', 'nullable', 'max:5120'],
+           
         ],
         // Step 1: Family Composition 
         1 => [
             'family_members' => ['nullable', 'array'],
-            'family_members.*.fam_img' => ['file', 'nullable', 'max:5120'], // Changed to nullable file on update
+            'family_members.*.fam_img' => ['file', 'nullable', 'max:5120'], 
             'family_members.*.nickname' => ['nullable', 'max:255'],
             'family_members.*.firstname' => ['required', 'max:225'],
             'family_members.*.middlename' => ['nullable', 'max:225'],
@@ -215,6 +220,14 @@ class IdentifyingInformationController extends Controller
         $step3Keys = array_keys($this->stepRules[3]);
 
         $clientInfoData = collect($validated)->only($step0Keys)->toArray();
+        foreach (['photo_front', 'photo_left', 'photo_right'] as $photoKey) {
+        if ($request->hasFile($photoKey)) {
+            // Store the file and replace the File object with the storage path string
+            $clientInfoData[$photoKey] = $request->file($photoKey)->store('client_photos', 'public');
+        }
+    }
+   
+
         unset($clientInfoData['client_id']); // ignore old client_id
         $caseNo = $clientInfoData['case_no'] ?? null;
         unset($clientInfoData['case_no']); // remove before create client
@@ -279,6 +292,8 @@ class IdentifyingInformationController extends Controller
             ], 500);
         }
     }
+
+ 
 
 
 

@@ -13,8 +13,8 @@ import RadioBtn from '@/Components/RadioBtn.vue';
 import ChipCom from "@/Components/ChipCom.vue";
 import CurrencyConvert from "@/Components/CurrencyConvert.vue";
 import useNotify from "@/Message/Notify";
-import {genderOptions,relationshipOptions,CivilStatusOptions,EducationOptions} from '@/Constant/Choices.js'
-
+import {genderOptions,relationshipOptions,CivilStatusOptions,EducationOptions,dataHealth} from '@/Constant/Choices.js'
+import SelectHealth from "@/Components/SelectHealth.vue";
 const emit = defineEmits(['member-saved']);
 const notify = useNotify();
 const isVisible = ref(false);
@@ -43,8 +43,12 @@ const memberForm = useForm({
 });
 
 
+
+
+
 const validateForm = () => {
     let isValid = true;
+
     const requiredFields = {
         'firstname': 'First Name',
         'lastname': 'Last Name',
@@ -55,6 +59,9 @@ const validateForm = () => {
         'education_attainment': 'Educational Attainment',
         'health_status': 'Health Status',
     };
+
+
+
     
     // Clear previous errors first
     memberForm.clearErrors();
@@ -68,7 +75,7 @@ const validateForm = () => {
         }
     });
 
-    // Check for array fields (skills_and_occupation)
+   
     if (!memberForm.skills_and_occupation || memberForm.skills_and_occupation.length === 0) {
         memberForm.errors.skills_and_occupation = 'The Skills/Occupation field is required.';
         isValid = false;
@@ -81,28 +88,28 @@ const validateForm = () => {
 
 const openModal = (initialData = null, index = null) => {
     isVisible.value = true;
-    memberForm.reset(); // Always reset form initially to clear previous state
+    memberForm.reset(); 
 
     if (initialData) {
-        // EDIT MODE: Populate the form with existing data
-        memberForm.defaults(initialData).reset(); // Set defaults and then reset to those defaults
+      
+        memberForm.defaults(initialData).reset(); 
         currentEditingIndex.value = index;
     } else {
         // ADD MODE: Reset the editing index
         currentEditingIndex.value = null;
     }
 
-    memberForm.clearErrors(); // Clear errors
+    memberForm.clearErrors(); 
 };
 
 // Function to close the modal
 const closeModal = () => {
     isVisible.value = false;
     memberForm.reset();
-    currentEditingIndex.value = null; // Important: reset index on close
+    currentEditingIndex.value = null; 
 };
 
-// *** MODIFIED Submission logic ***
+
 const saveMember = () => {
     // 1. Run client-side validation
     if (!validateForm()) {
@@ -150,7 +157,7 @@ defineExpose({ openModal });
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 items-start">
-                    <label class="font-medium text-gray-700 pt-3">Person's Name</label>
+                    <label class="font-medium text-gray-700 pt-3">Person's Name <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2 space-y-3">
                         <TextInputField v-model="memberForm.firstname" name="First Name" placeholder="First Name"
                             :message="memberForm.errors.firstname" />
@@ -164,7 +171,7 @@ defineExpose({ openModal });
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 items-start">
-                    <label class="font-medium text-gray-700 pt-3">Sex</label>
+                    <label class="font-medium text-gray-700 pt-3">Sex <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2 space-y-3">
                         <SelectBtnComponent v-model="memberForm.sex" :options="genderOptions"
                             :message="memberForm.errors.sex" class=" w-full" />
@@ -172,7 +179,7 @@ defineExpose({ openModal });
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 items-start">
-                    <label class="font-medium text-gray-700 pt-3">Birthdate</label>
+                    <label class="font-medium text-gray-700 pt-3">Birthdate <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2 space-y-3">
                         <BirthDatePicker v-model="memberForm.birthdate" :message="memberForm.errors.birthdate"
                             class="col-span-2 w-full" />
@@ -181,7 +188,7 @@ defineExpose({ openModal });
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 items-start">
-                    <label class="font-medium text-gray-700 pt-3">Civil Status</label>
+                    <label class="font-medium text-gray-700 pt-3">Civil Status <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2 space-y-3">
                         <SelectwithOthers v-model="memberForm.civil_status" :options="CivilStatusOptions"
                             :message="memberForm.errors.civil_status" class="col-span-2 w-full" />
@@ -191,7 +198,7 @@ defineExpose({ openModal });
 
 
                 <div class="grid grid-cols-3 gap-3 items-start py-2">
-                    <label class="font-medium text-gray-700">Relationship</label>
+                    <label class="font-medium text-gray-700">Relationship <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2">
                         <SelectComponent placeholder="Select here.." v-model="memberForm.relationship"
                             :options="relationshipOptions" :message="memberForm.errors.relationship"
@@ -202,7 +209,7 @@ defineExpose({ openModal });
 
 
                 <div class="grid grid-cols-3 gap-3 items-start py-2">
-                    <label class="font-medium text-gray-700">Educational Attaintment</label>
+                    <label class="font-medium text-gray-700">Educational Attaintment <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2">
                         <RadioBtn v-model="memberForm.education_attainment" :options="EducationOptions" name="education"
                             :message="memberForm.errors.education_attainment" />
@@ -211,7 +218,7 @@ defineExpose({ openModal });
 
 
                 <div class="grid grid-cols-3 gap-3 items-start py-2">
-                    <label class="font-medium text-gray-700">Skills/Occupation</label>
+                    <label class="font-medium text-gray-700">Skills/Occupation <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2">
                         <TextInputField v-model="memberForm.skills_and_occupation"
                             :message="memberForm.errors.skills_and_occupation"  />
@@ -263,9 +270,14 @@ defineExpose({ openModal });
 
 
                 <div class="grid grid-cols-3 gap-4 items-start">
-                    <label class="font-medium text-gray-700 pt-3">Health Status</label>
+                    <label class="font-medium text-gray-700 pt-3">Health Status <span class="text-sm font-semibold text-red-500">*</span></label>
                     <div class="col-span-2 w-full">
-                        <TextInputField v-model="memberForm.health_status" :message="memberForm.errors.health_status" />
+
+                          <SelectHealth placeholder="Select here.." v-model="memberForm.health_status"
+                            :options="dataHealth" :message="memberForm.errors.health_status"
+                            class="col-span-2 w-full" />
+
+                        
                     </div>
                 </div>
 

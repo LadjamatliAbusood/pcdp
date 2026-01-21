@@ -8,57 +8,79 @@ use Inertia\Inertia;
 use Illuminate\Pagination\LengthAwarePaginator;
 class ClientRecordsController extends Controller
 {
-      public function index(Request $request)
-    {
-        $perPage = $request->input('per_page', 10);
-        $search = $request->input('search');
-        $page = $request->input('page', 1);
+  public function index(Request $request)
+{
+    $perPage = $request->input('per_page', 10);
+    $search  = $request->input('search');
+    $page    = $request->input('page', 1);
 
-        // Base query with relations
-        $query = ClientInfoModel::with([
-            'ClientCaseno.CategoryCase.ClientCategory',
-            'ClientCaseno.CategoryCase.ClientAssessment',
-            'ClientCaseno.CategoryCase.ClientServices',
-            'ClientCaseno.CategoryCase.ClientFamilyMembers',
-        ]);
+    /**
+     * STEP 1: Determine matching CASE NUMBERS
+     * (search decides WHICH CASES, not which rows)
+     */
+    $matchingCaseNos = null;
 
-        // Apply search
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%$search%")
-                  ->orWhere('lastname', 'like', "%$search%")
-                  ->orWhereHas('ClientCaseno', fn($q2) => $q2->where('case_no', 'like', "%$search%"));
-            });
-        }
-
-      
-        $clients = $query->get();
-
-     
-        $records = $this->buildClientRecords($clients);
-
-      
-        $paginatedRecords = new LengthAwarePaginator(
-            collect($records)->forPage($page, $perPage)->values(), 
-            count($records), 
-            $perPage,       
-            $page,          
-            [
-                'path' => $request->url(),
-                'query' => $request->query(), 
-            ]
-        );
-
-        // Send to Inertia
-        return Inertia::render('Admin/ClientRecords/ClientRecords', [
-            'title' => 'All Client Records',
-            'clients' => $paginatedRecords,
-            'filters' => [
-                'search' => $search,
-                'per_page' => $perPage
-            ],
-        ]);
+    if ($search) {
+        $matchingCaseNos = ClientInfoModel::where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                  ->orWhere('lastname', 'like', "%{$search}%");
+            })
+            ->orWhereHas('ClientCaseno', function ($q) use ($search) {
+                $q->where('case_no', 'like', "%{$search}%");
+            })
+            ->with('ClientCaseno')
+            ->get()
+            ->flatMap(fn ($client) => $client->ClientCaseno->pluck('case_no'))
+            ->unique()
+            ->values();
     }
+
+    /**
+     * STEP 2: Load ALL CLIENTS under those CASE NUMBERS
+     */
+    $query = ClientInfoModel::with([
+        'ClientCaseno.CategoryCase.ClientCategory',
+        'ClientCaseno.CategoryCase.ClientAssessment',
+        'ClientCaseno.CategoryCase.ClientServices',
+        'ClientCaseno.CategoryCase.ClientFamilyMembers',
+    ]);
+
+    if ($search && $matchingCaseNos && $matchingCaseNos->isNotEmpty()) {
+        $query->whereHas('ClientCaseno', function ($q) use ($matchingCaseNos) {
+            $q->whereIn('case_no', $matchingCaseNos);
+        });
+    }
+
+    /**
+     * STEP 3: Build grouped records (unchanged logic)
+     */
+    $clients = $query->get();
+    $records = $this->buildClientRecords($clients);
+
+    /**
+     * STEP 4: Manual pagination (kept as-is)
+     */
+    $paginatedRecords = new LengthAwarePaginator(
+        collect($records)->forPage($page, $perPage)->values(),
+        count($records),
+        $perPage,
+        $page,
+        [
+            'path'  => $request->url(),
+            'query' => $request->query(),
+        ]
+    );
+
+    return Inertia::render('Admin/ClientRecords/ClientRecords', [
+        'title'   => 'All Client Records',
+        'clients' => $paginatedRecords,
+        'filters' => [
+            'search'   => $search,
+            'per_page' => $perPage,
+        ],
+    ]);
+}
+
 
 
       private function buildClientRecords($clients): array

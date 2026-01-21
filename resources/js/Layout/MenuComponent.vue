@@ -8,11 +8,11 @@
       >
         <Link 
           :href="item.to" 
-          :class="[
-            'flex items-center cursor-pointer gap-2 rounded-[5px] px-1 py-1 text-white font-base hover:bg-white/15',
-            // --- NEW: Apply active class conditionally based on current URL ---
-            { 'bg-white/15': isItemActive(item.to) } 
-          ]"
+         :class="[
+  'flex items-center cursor-pointer gap-2 rounded-[5px] px-1 py-1 text-white font-base hover:bg-white/15',
+  { 'bg-white/15': isItemActive(item.to, item.match) }
+]"
+
         >
           <i v-if="item.icon" :class="[item.icon, 'text-base flex-shrink-0']"></i>
           
@@ -45,13 +45,20 @@ const componentClass = computed(() => props.class);
 
 const page = usePage();
 
-const isItemActive = (url) => {
+const isItemActive = (to, match = []) => {
+  const currentUrl = page.url;
 
-    const currentUrl = page.url; 
-    
+  // exact match
+  if (currentUrl === to) return true;
 
-    return currentUrl === url;
+  // parent / grouped routes
+  if (Array.isArray(match) && match.length) {
+    return match.some(path => currentUrl.startsWith(path));
+  }
+
+  return false;
 };
+
 
 
 </script>

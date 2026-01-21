@@ -66,14 +66,27 @@ const chunkedPages = computed(() => {
 
 // --- helper for building link with filters ---
 const buildPageLink = (page) => {
-    const query = pickBy({
+    // 1. Merge current filters with page and per_page
+    const params = pickBy({
         page,
         per_page: props.paginator.per_page,
         ...props.filters,
     });
 
-    const searchParams = new URLSearchParams(query).toString();
-    return `${props.paginator.path}?${searchParams}`;
+    
+    const searchParams = new URLSearchParams();
+    
+    Object.keys(params).forEach(key => {
+        if (Array.isArray(params[key])) {
+            params[key].forEach(value => {
+                searchParams.append(`${key}[]`, value); 
+            });
+        } else {
+            searchParams.set(key, params[key]);
+        }
+    });
+
+    return `${props.paginator.path}?${searchParams.toString()}`;
 };
 </script>
 

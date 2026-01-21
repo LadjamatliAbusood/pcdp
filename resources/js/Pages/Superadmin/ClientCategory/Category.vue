@@ -34,7 +34,7 @@ watch(searchQuery, debounce((value) => {
     router.get(window.location.pathname, 
         pickBy({ 
             search: value, 
-            per_page: props.clients.per_page // Keep the current limit
+            per_page: props.clients.per_page 
         }), 
         { preserveState: true, replace: true }
     );

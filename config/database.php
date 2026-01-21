@@ -63,6 +63,16 @@ return [
             ]) : [],
         ],
 
+          'hrmis_db' => [
+            'driver' => 'mysql',
+            'host' => env('HR_DB_HOST', '127.0.0.1'),
+            'port' => env('HR_DB_PORT', '3306'),
+            'database' => env('HR_DB_DATABASE', 'forge'),
+            'username' => env('HR_DB_USERNAME', 'forge'),
+            'password' => env('HR_DB_PASSWORD', ''),
+        ],
+
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('client_fingerprints', function (Blueprint $table) {
             $table->id();
+
+            
+
            $table->foreignId('client_category_case_id')
                   ->constrained('client_category_case')
                   ->onDelete('cascade');

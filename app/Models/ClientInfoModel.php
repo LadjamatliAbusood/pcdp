@@ -44,6 +44,9 @@ class ClientInfoModel extends Model
         'estimated_code_currency',
         'estimated_income_local', 
         'estimated_code',
+        'photo_front', 
+        'photo_left', 
+        'photo_right',
     ];
 
     protected $casts = [

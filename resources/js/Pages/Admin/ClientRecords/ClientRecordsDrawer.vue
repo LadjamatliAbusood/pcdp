@@ -12,8 +12,10 @@ import TabPanel from "primevue/tabpanel";
 import CategoryTag from "@/Components/CategoryTag.vue";
 import { useClientHelpers } from "@/Constant/useClientHelpers";
 import Button from "primevue/button";
-
+import Image from 'primevue/image';
+import { dataHealth } from "@/Constant/Choices";
 const { formatDate, getSexLabel, getEducationOptions, ClientPlan } = useClientHelpers();
+
 
 const props = defineProps({
     visible: Boolean,
@@ -111,38 +113,42 @@ const displayFields = computed(() => {
 
 
 
-const familyFields = computed(() => {
+const familyMembersData = computed(() => {
     if (!selectedIntake.value?.family_members?.length) return [];
 
-    return selectedIntake.value.family_members.flatMap((m, index) => [
-
-        { label: 'Nickname', value: m.nickname || '' },
-        { label: 'First Name', value: m.firstname || '' },
-        { label: 'Middle Name', value: m.middlename || '' },
-        { label: 'Last Name', value: m.lastname || '' },
-        { label: 'Extension', value: m.extensionname || '' },
-        { label: 'Sex', value: m.sex ? getSexLabel(m.sex) : '' },
-        { label: 'Birth Date', value: m.birthdate ? formatDate(m.birthdate) : '' },
-        { label: 'Civil Status', value: m.civil_status || '' },
-        { label: 'Relationship', value: m.relationship || '' },
-        {
-            label: 'Education',
-            value: m.education_attainment ? getEducationOptions(m.education_attainment) : ''
-        },
-        { label: 'Skills / Occupation', value: m.skills_and_occupation || '' },
-        { label: 'Health Status', value: m.health_status || '' },
-        {
-            label: 'Estimated Income',
-            value: [
-                m.estimated_income_foriegn
-                    ? `${Number(m.estimated_income_foriegn).toLocaleString()} ${m.estimated_code_currency || ''}`
-                    : '',
-                m.estimated_income_local
-                    ? `${Number(m.estimated_income_local).toLocaleString()} ${m.estimated_code || ''}`
+    return selectedIntake.value.family_members.map((m) => ({
+        fam_img: m.fam_img, // ✅ attach image here
+        fields: [
+            { label: 'Nickname', value: m.nickname || '' },
+            { label: 'First Name', value: m.firstname || '' },
+            { label: 'Middle Name', value: m.middlename || '' },
+            { label: 'Last Name', value: m.lastname || '' },
+            { label: 'Extension', value: m.extensionname || '' },
+            { label: 'Sex', value: m.sex ? getSexLabel(m.sex) : '' },
+            { label: 'Birth Date', value: m.birthdate ? formatDate(m.birthdate) : '' },
+            { label: 'Civil Status', value: m.civil_status || '' },
+            { label: 'Relationship', value: m.relationship || '' },
+            {
+                label: 'Education Attainment',
+                value: m.education_attainment
+                    ? getEducationOptions(m.education_attainment)
                     : ''
-            ].filter(Boolean).join(' | ')
-        }
-    ]);
+            },
+            { label: 'Skills/Occupation', value: m.skills_and_occupation || '' },
+            {
+                label: 'Estimated Income',
+                value: [
+                    m.estimated_income_foriegn
+                        ? `${Number(m.estimated_income_foriegn).toLocaleString()} ${m.estimated_code_currency || ''}`
+                        : '',
+                    m.estimated_income_local
+                        ? `${Number(m.estimated_income_local).toLocaleString()} ${m.estimated_code || ''}`
+                        : ''
+                ].filter(Boolean).join(' | ')
+            },
+            { label: 'Health Status', value: m.health_status || '' },
+        ]
+    }));
 });
 
 
@@ -303,39 +309,39 @@ const formatStayDuration = (data) => {
 // Compute total history summary across all cases
 
 const historySummary = computed(() => {
-  const cases = props.rowData?.all_category_cases || [];
+    const cases = props.rowData?.all_category_cases || [];
 
-  let totalDays = 0;
+    let totalDays = 0;
 
-  cases.forEach(c => {
-    const a = c.assessment;
-    if (!a) return;
+    cases.forEach(c => {
+        const a = c.assessment;
+        if (!a) return;
 
 
-    totalDays += convertToDays(a.length_stay_in_malaysia, a.length_stay_in_malaysia_options);
+        totalDays += convertToDays(a.length_stay_in_malaysia, a.length_stay_in_malaysia_options);
 
-    if (a.length_value_if_with_years && a.additional_length_option_if_with_years) {
-      totalDays += convertToDays(a.length_value_if_with_years, a.additional_length_option_if_with_years);
-    }
-  });
+        if (a.length_value_if_with_years && a.additional_length_option_if_with_years) {
+            totalDays += convertToDays(a.length_value_if_with_years, a.additional_length_option_if_with_years);
+        }
+    });
 
-  return {
-    stay: formatTotalDays(totalDays),
-    categoryCount: cases.filter(c => c.category).length
-  };
+    return {
+        stay: formatTotalDays(totalDays),
+        categoryCount: cases.filter(c => c.category).length
+    };
 });
 
 watch(
-  () => props.rowData,
-  (row) => {
-    if (row?._openIntake) {
-      selectedIntake.value = row._openIntake; 
-      activeTab.value = "0"; // Client Info tab
-    } else {
-      selectedIntake.value = null;
-    }
-  },
-  { immediate: true }
+    () => props.rowData,
+    (row) => {
+        if (row?._openIntake) {
+            selectedIntake.value = row._openIntake;
+            activeTab.value = "0"; // Client Info tab
+        } else {
+            selectedIntake.value = null;
+        }
+    },
+    { immediate: true }
 );
 
 
@@ -344,30 +350,41 @@ const onRowClick = e => {
     activeTab.value = "0";
 };
 
+
+const getHealthColor = (val) => {
+   
+    const status = dataHealth.find(h => h.value === val);
+   
+    return status ? status.color : '#475569'; 
+};
+
+const getFamilyImage = (path) => {
+    return path
+        ? `/storage/${path}`
+        : '/images/default-avatar.png';
+};
+
 </script>
 
 <template>
-    <Drawer v-model:visible="drawerVisibility" position="right" 
-      :style="{ width: '50%' }"
-      class="pt-0">
+    <Drawer v-model:visible="drawerVisibility" position="right" :style="{ width: '50%' }" class="pt-0">
         <template #header>
             <div class="w-full">
                 <h1 class="text-xl font-bold">
                     {{ selectedIntake ? 'General Intake Info' : 'Case: ' + rowData?.display_case_no }}
                 </h1>
-               <Divider class="!mb-0" />
+                <Divider class="!mb-0" />
             </div>
         </template>
 
         <div v-if="rowData" class="space-y-0">
-            <!-- Tabs for selected intake -->
-            <Tabs v-if="selectedIntake" v-model:value="activeTab">
+            <Tabs v-if="selectedIntake" v-model:value="activeTab" class="compact-tabs">
 
-                <TabList>
-                    <Tab value="0">
+                <TabList class="">
+                    <Tab value="0" class="!px-3 !py-2">
                         <span :class="[
-                            'flex items-center gap-1 text-sm transition-colors',
-                            activeIndex === '0'
+                            'flex items-center gap-1 text-xs font-medium transition-colors',
+                            activeTab === '0'
                                 ? 'text-blue-800'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]">
@@ -375,144 +392,196 @@ const onRowClick = e => {
                         </span>
                     </Tab>
 
-                    <Tab value="1">
+                    <Tab value="1" class="!px-3 !py-2">
                         <span :class="[
-                            'flex items-center gap-1 text-sm transition-colors',
-                            activeIndex === '1'
+                            'flex items-center gap-1 text-xs font-medium transition-colors',
+                            activeTab === '1'
                                 ? 'text-blue-800'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]">
                             Family Background
                         </span>
                     </Tab>
-                    <Tab value="2">
+                    <Tab value="2" class="!px-3 !py-2">
                         <span :class="[
-                            'flex items-center gap-1 text-sm transition-colors',
-                            activeIndex === '2'
+                            'flex items-center gap-1 text-xs font-medium transition-colors',
+                            activeTab === '2'
                                 ? 'text-blue-800'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]">
                             Assessment
                         </span>
                     </Tab>
-                    <Tab value="3">
+                    <Tab value="3" class="!px-3 !py-2">
                         <span :class="[
-                            'flex items-center gap-1 text-sm transition-colors',
-                            activeIndex === '3'
+                            'flex items-center gap-1 text-xs font-medium transition-colors',
+                            activeTab === '3'
                                 ? 'text-blue-800'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]">
-                            Recomendation Services and Assistance
+                            Services
                         </span>
                     </Tab>
 
                 </TabList>
 
-                <TabPanels>
-                    <TabPanel value="0">
-                        <div class="space-y-2 mt-4">
-                            <div v-for="item in displayFields" :key="item.label" class="flex border-gray-50 pb-1">
-                                <span class="w-1/3 text-gray-900 font-medium ">{{ item.label }}</span>
-                                <span class="w-2/3">{{ item.value }}</span>
-                            </div>
-                        </div>
-                    </TabPanel>
+                <TabPanels class="!p-0">
+                  <TabPanel value="0">
+    <div class=" mt-4">
+        <div class="flex border-gray-50 pb-1">
+            <span class="w-1/3 text-gray-700 font-bold text-sm">Case No.</span>
+            <span class="w-2/3 text-sm  ">
+                {{ rowData?.display_case_no }}
+            </span>
+        </div>
 
-                    <TabPanel value="1">
-                        <div class="space-y-2 mt-4">
-                            <div v-for="item in familyFields" :key="item.label" class="flex pb-1">
-                                <span class="w-1/3 font-medium text-gray-900">{{ item.label }}</span>
-                                <span>{{ item.value }}</span>
-                            </div>
-                            <p v-if="!familyFields.length" class="italic text-gray-400">No records.</p>
-                        </div>
-                    </TabPanel>
+        <template v-for="item in displayFields" :key="item.label">
+            <div class="flex border-gray-50 pb-1">
+                <span class="w-1/3 text-gray-700 font-bold text-sm">{{ item.label }}</span>
+                <span class="w-2/3 text-sm">{{ item.value }}</span>
+            </div>
+
+            <Divider v-if="item.label === 'Sex'" class="!my-2" />
+        </template>
+    </div>
+</TabPanel>
+
+        <TabPanel value="1">
+    <div class="space-y-4 mt-2">
+       <div
+  v-for="(member, index) in familyMembersData"
+  :key="index"
+  class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm"
+>
+    <div class="flex justify-between gap-4">
+
+        <div class="flex-1">
+            <div
+              v-for="item in member.fields"
+              :key="item.label"
+              class="flex items-center pb-1"
+            >
+                <span class="w-1/3 font-bold text-sm text-gray-700">
+                    {{ item.label }}
+                </span>
+
+                <div class="flex items-center gap-2">
+                    <div
+                        v-if="item.label === 'Health Status'"
+                        :style="{ backgroundColor: getHealthColor(item.value) }"
+                        class="w-3 h-3 rounded-full"
+                    ></div>
+
+                    <span class="text-sm text-gray-700">
+                        {{ item.value || '' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="shrink-0">
+          <Image 
+  v-if="member.fam_img"
+  :src="getFamilyImage(member.fam_img)"
+  alt="Family Member"
+  class="w-24 h-24 rounded-md object-cover border border-gray-200 shadow-sm"
+  preview 
+/>
+
+            <div
+                v-else
+                class="w-24 h-24 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] text-center p-2"
+            >
+                No Image
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+        <p v-if="!familyMembersData.length" class="italic text-gray-400">No records.</p>
+    </div>
+</TabPanel>
 
                     <TabPanel value="2">
-                        <div class="space-y-2 mt-4">
+                        <div class=" mt-4">
                             <div v-for="item in assessmentFields" :key="item.label" class="grid grid-cols-3 gap-2 pb-1">
-                                <!-- Insert H1 above the Contact Person fields -->
                                 <template v-if="item.label === 'Full Name'">
-                                    <h1 class="text-lg font-bold col-span-3 mb-2 ">Contact Person in the Philippines
+                                    <h1 class="text-lg font-bold col-span-3 my-2 ">Contact Person in the Philippines
                                     </h1>
                                 </template>
-
-                                <span class="font-medium text-gray-900">{{ item.label }}</span>
-                                <span class="col-span-2">{{ item.value }}</span>
+                                <span class="font-bold text-sm text-gray-700">{{ item.label }}</span>
+                                <span class="col-span-2 text-sm">{{ item.value }}</span>
                             </div>
-
                             <p v-if="!assessmentFields.length" class="italic text-gray-400">
                                 No additional assessment info available.
                             </p>
                         </div>
                     </TabPanel>
 
-
-
-
-
                     <TabPanel value="3">
-                        <div v-for="item in serviceFields" :key="item.label" class="flex pb-1">
-                            <span class="w-1/3 font-medium text-gray-900">{{ item.label }}</span>
-
-                            <span class="w-2/3">
-                                <div v-for="(v, i) in item.value" :key="i">
-                                    {{ v }}
-                                </div>
-                            </span>
+                        <div class="mt-4 space-y-2">
+                            <div v-for="item in serviceFields" :key="item.label" class="flex pb-1">
+                                <span class="w-1/3 font-bold text-sm text-gray-700">{{ item.label }}</span>
+                                <span class="w-2/3 text-sm">
+                                    <div v-for="(v, i) in item.value" :key="i">
+                                        {{ v }}
+                                    </div>
+                                </span>
+                            </div>
                         </div>
                     </TabPanel>
                 </TabPanels>
             </Tabs>
 
-            <!-- Display client info if no intake selected -->
             <div v-else class="space-y-2">
-                <div v-for="item in displayFields" :key="item.label" class="flex">
-                    <span class="w-1/3 text-gray-900 font-medium">{{ item.label }}</span>
-                    <span class="w-2/3">{{ item.value }}</span>
-                </div>
-                 <Divider class="my-6" />
-  <section>
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold">History of Intakes</h3>
+                <template v-for="item in displayFields" :key="item.label">
+                    <div class="flex">
+                        <span class="w-1/3 text-gray-700 font-bold text-sm">{{ item.label }}</span>
+                        <span class="w-2/3 text-sm">{{ item.value }}</span>
+                    </div>
 
-                    <span class="text-sm text-gray-600">
-                        <strong>Total Stay:</strong> {{ historySummary.stay }}
+                    <Divider v-if="item.label === 'Sex'" class="!my-2" />
+                </template>
 
-                        <strong>No of Deportees:</strong>{{ historySummary.categoryCount }}
-                    </span>
-                </div>
+                <Divider class="my-6" />
 
-                <DataTable :value="categoryHistory" @row-click="onRowClick" selectionMode="single"
-                    class="p-datatable-sm">
-                    <Column field="category" header="Category">
-                        <template #body="{ data }">
-                            <CategoryTag :value="data.category" severity="secondary" />
-                        </template>
-                    </Column>
-                    <Column header="Length of Stay">
-                        <template #body="{ data }">
-                            <span>
-                                {{ formatStayDuration(data) }}
-                            </span>
-                        </template>
-                    </Column>
+                <section>
+                </section>
 
-                    <Column field="date" header="Date Encoded" />
-                </DataTable>
 
-               
-            </section>
+                <Divider class="my-6" />
+                <section>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold">History of Intakes</h3>
+                        <span class="text-sm text-gray-600">
+                            <strong>Total Stay: </strong> {{ historySummary.stay }}
+                            <strong>No of Deportees: </strong>{{ historySummary.categoryCount }}
+                        </span>
+                    </div>
 
+                    <DataTable :value="categoryHistory" @row-click="onRowClick" selectionMode="single"
+                        class="p-datatable-sm text-sm">
+                        <Column field="category" header="Category">
+                            <template #body="{ data }">
+                                <CategoryTag :value="data.category" severity="secondary" />
+                            </template>
+                        </Column>
+                        <Column header="Length of Stay">
+                            <template #body="{ data }">
+                                <span>{{ formatStayDuration(data) }}</span>
+                            </template>
+                        </Column>
+                        <Column field="date" header="Date Encoded" />
+                    </DataTable>
+                </section>
             </div>
+        </div>
 
-           
-
-          
-             <div v-if="selectedIntake" class="mt-4 text-right">
+         <div v-if="selectedIntake" class="mt-4 text-right">
                     <Button @click="selectedIntake = null" variant="text">
                         ← Back to Case Summary</Button>
                 </div>
-        </div>
     </Drawer>
 </template>

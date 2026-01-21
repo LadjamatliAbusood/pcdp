@@ -173,17 +173,17 @@ onMounted(async()=>{
     <form @submit.prevent>
 
          <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Type of Client</label>
+                <label class="font-medium text-gray-700">Type of Client <span class="text-sm font-semibold text-red-500">*</span></label>
                 <SelectComponent
                 v-model="form.typeofclient"
                 :options="clienttype"
                 :message="form.errors.typeofclient"
-                placeholder="Select ID Presented"
+                placeholder="Select Client"
                 class="col-span-2 w-full"/>
             </div>
 
            <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Client ID Presented</label>
+                <label class="font-medium text-gray-700">Client ID Presented <span class="text-sm font-semibold text-red-500">*</span></label>
                 <SelectComponent
                 v-model="form.id_presented"
                 :options="idpresented"
@@ -194,7 +194,7 @@ onMounted(async()=>{
 
 
              <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Client Category</label>
+                <label class="font-medium text-gray-700">Client Category <span class="text-sm font-semibold text-red-500">*</span></label>
                 <SelectComponent
                 v-model="form.client_category_id"
                 :options="categories"
@@ -208,7 +208,7 @@ onMounted(async()=>{
   
   <!-- Label -->
   <label class="font-medium text-gray-700">
-    Length of stay in Malaysia
+    Length of stay in Malaysia <span class="text-sm font-semibold text-red-500">*</span>
   </label>
 
   <!-- Input + Select -->
@@ -272,7 +272,7 @@ onMounted(async()=>{
 
       <!-- Client went to malaysia-->
    <div class="grid grid-cols-3 gap-3 items-start py-2">
-    <label class="font-medium text-gray-700">How did the client go to Malaysia?</label>
+    <label class="font-medium text-gray-700">How did the client go to Malaysia?<span class="text-sm font-semibold text-red-500">*</span></label>
     <div class="col-span-2">
         
         <RadioWithSelect 
@@ -297,7 +297,7 @@ onMounted(async()=>{
 
       <!-- Client Employeed  -->
       <div class="grid grid-cols-3 gap-3 items-center py-2">
-        <label class="font-medium text-gray-700">Was the client employed?</label>
+        <label class="font-medium text-gray-700">Was the client employed? <span class="text-sm font-semibold text-red-500">*</span></label>
         <div class="col-span-2">
 
         <SelectBtnClient 
@@ -334,28 +334,28 @@ onMounted(async()=>{
         <div  v-if="showRepatriationFields">
  <!-- Stay in client_repatriated -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Why was the client repatriated to the Philippines?</label>
+        <label class="font-medium text-gray-700">Why was the client repatriated to the Philippines? <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField v-model="form.client_repatriated" :message="form.errors.client_repatriated"
           class="col-span-2 w-full" />
       </div>
 
       <!-- Travel Document No. -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Travel Document No.</label>
+        <label class="font-medium text-gray-700">Travel Document No. <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField  v-model="form.travel_document_no" :message="form.errors.travel_document_no"
           class="col-span-2 w-full" />
       </div>
 
       <!-- Issued By -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Issued By</label>
+        <label class="font-medium text-gray-700">Issued By <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField v-model="form.issued_by" :message="form.errors.issued_by" class="col-span-2 w-full" />
       </div>
 
 
       <!-- Date Issued -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Date Issued</label>
+        <label class="font-medium text-gray-700">Date Issued <span class="text-sm font-semibold text-red-500">*</span></label>
         <div class="col-span-2">
           <DatePickerComponent v-model="form.date_issued" :message="form.errors.date_issued"
             class="col-span-2 w-full" />
@@ -364,7 +364,7 @@ onMounted(async()=>{
 
       <!-- Passport/IC Number -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Passport/IC Number</label>
+        <label class="font-medium text-gray-700">Passport/IC Number <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField v-model="form.passport_ic_no" :message="form.errors.passport_ic_no" class="col-span-2 w-full" />
       </div>
 
@@ -372,7 +372,7 @@ onMounted(async()=>{
      
       <!-- Client Problem -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Client Problem</label>
+        <label class="font-medium text-gray-700">Client Problem <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextAreaComponent v-model="form.client_problem" :message="form.errors.client_problem"
           class="col-span-2 w-full h-18" />
       </div>
@@ -385,7 +385,7 @@ onMounted(async()=>{
 
       <!-- Client's Plan  -->
       <div class="grid mt-5 grid-cols-3 gap-3 items-start py-2">
-        <label class="font-medium text-gray-700">Client's Plan</label>
+        <label class="font-medium text-gray-700">Client's Plan <span class="text-sm font-semibold text-red-500">*</span></label>
         <div class="col-span-2">
           <SelectBtnComponent 
           v-model="form.client_plan" 
@@ -424,19 +424,19 @@ onMounted(async()=>{
 
       <!-- Contact person Full Name -->
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Fullname</label>
+        <label class="font-medium text-gray-700">Fullname <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField v-model="form.contact_person_fullname" :message="form.errors.contact_person_fullname"
           class="col-span-2 w-full " />
       </div>
 
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Phone Number</label>
+        <label class="font-medium text-gray-700">Phone Number <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField type="number" v-model="form.contact_person_phonenumber"
           :message="form.errors.contact_person_phonenumber" class="col-span-2 w-full " />
       </div>
 
       <div class="grid grid-cols-3 gap-4 items-start py-2">
-        <label class="font-medium text-gray-700">Relationship</label>
+        <label class="font-medium text-gray-700">Relationship <span class="text-sm font-semibold text-red-500">*</span></label>
         <TextInputField v-model="form.contact_person_relationship" :message="form.errors.contact_person_relationship"
           class="col-span-2 w-full" />
       </div>

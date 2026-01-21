@@ -11,8 +11,14 @@ class ClientRecordsGenIntakesController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = (int) $request->input('per_page', 10);
-    $search = $request->input('search');
+        $perPage   = (int) $request->input('per_page', 10);
+    $search    = $request->input('search');
+$categories = $request->input('categories');
+if (empty($categories)) {
+    $categories = [];
+} elseif (!is_array($categories)) {
+    $categories = [$categories];
+}
 
     // 1️⃣ Build query
     $query = ClientInfoModel::with([
@@ -22,43 +28,62 @@ class ClientRecordsGenIntakesController extends Controller
         'ClientCaseno.CategoryCase.ClientFamilyMembers',
     ])
     ->when($search, function ($q) use ($search) {
-        $q->where('firstname', 'like', "%{$search}%")
-          ->orWhere('middlename', 'like', "%{$search}%")
-          ->orWhere('lastname', 'like', "%{$search}%")
-          ->orWhereHas('ClientCaseno', fn($q2) =>
-                $q2->where('case_no', 'like', "%{$search}%")
-          )
-          ->orWhereRaw("DATE_FORMAT(created_at, '%M %e, %Y') LIKE ?", ["%{$search}%"]);
+        $q->where(function ($qq) use ($search) {
+            $qq->where('firstname', 'like', "%{$search}%")
+               ->orWhere('middlename', 'like', "%{$search}%")
+               ->orWhere('lastname', 'like', "%{$search}%")
+               ->orWhereHas('ClientCaseno', fn ($q2) =>
+                    $q2->where('case_no', 'like', "%{$search}%")
+               )
+               ->orWhereRaw(
+                    "DATE_FORMAT(created_at, '%M %e, %Y') LIKE ?",
+                    ["%{$search}%"]
+               );
+        });
+    })
+    // ✅ CATEGORY FILTER — THIS IS THE KEY FIX
+    ->when(!empty($categories), function ($q) use ($categories) {
+        $q->whereHas(
+            'ClientCaseno.CategoryCase.ClientCategory',
+            function ($qc) use ($categories) {
+                $qc->whereIn('category', $categories)
+                   ->where('status', 1);
+            }
+        );
     })
     ->orderBy('id', 'desc');
 
-   
-    $paginatedClients = $query->paginate($perPage)->withQueryString();
+    // 2️⃣ Paginate AFTER filters
+    $paginatedClients = $query
+        ->paginate($perPage)
+        ->withQueryString();
 
-
+    // 3️⃣ Build records from paginated items
     $records = $this->buildClientRecords($paginatedClients->items());
 
-    
+    // 4️⃣ Rebuild paginator
     $paginator = new LengthAwarePaginator(
         $records,
         $paginatedClients->total(),
         $paginatedClients->perPage(),
         $paginatedClients->currentPage(),
         [
-            'path' => $paginatedClients->path(),
-            'query' => $request->query(), // ✅ safe: uses current request query
+            'path'  => $paginatedClients->path(),
+            'query' => $request->query(),
         ]
     );
+
+    // 5️⃣ ALL categories for MultiSelect
     $allCategories = ClientCategoryModel::query()
         ->where('status', 1)
         ->orderBy('category')
-    ->distinct()
-    ->pluck('category')
-    ->map(fn ($c) => [
-        'label' => $c,
-        'value' => $c,
-    ])
-    ->values();
+        ->distinct()
+        ->pluck('category')
+        ->map(fn ($c) => [
+            'label' => $c,
+            'value' => $c,
+        ])
+        ->values();
 
     return Inertia::render('Admin/ClientRecords/ClientRecordsGenIntakes', [
         'title' => 'All General Intakes Records',
@@ -66,8 +91,9 @@ class ClientRecordsGenIntakesController extends Controller
         'filters' => [
             'search' => $search,
             'per_page' => $perPage,
+            'categories' => $categories, // ✅ persist
         ],
-        'searchTerm'=>$request->search,
+        'searchTerm' => $search,
         'categories' => $allCategories,
     ]);
     }

@@ -155,7 +155,7 @@ function onlyNumberKey(e) {
     <!-- Day Input -->
     <InputText
       v-model="form.birthDay"
-      class="w-full"
+      class="w-full font-semibold rounded-lg block"
       placeholder="Day"
       type="text"
         @keypress="onlyNumberKey"

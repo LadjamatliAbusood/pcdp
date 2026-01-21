@@ -61,7 +61,7 @@ const Referedoptions = [
 
         <form @submit.prevent>
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Interventions needed</label>
+                <label class="font-medium text-gray-700">Interventions needed <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <CheckboxComponent
                         v-model="form.interventions_needed" 
@@ -74,7 +74,7 @@ const Referedoptions = [
             </div>
 
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Referred to</label>
+                <label class="font-medium text-gray-700">Referred to <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <RadioWithInput
                         v-model="form.referred_to"

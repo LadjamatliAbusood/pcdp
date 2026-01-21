@@ -19,6 +19,8 @@ class FingerprintController extends Controller
         'right_thumb', 'right_index', 'right_middle', 'right_ring', 'right_pinky',
     ];
 
+
+
 public function index()
 {
     try {
@@ -64,6 +66,10 @@ public function index()
         return response()->json(['error' => 'Failed to retrieve records.'], 500);
     }
 }
+
+
+
+
 
 
 
@@ -131,5 +137,61 @@ public function store(Request $request)
 }
 
 
+
+// public function store(Request $request)
+// {
+//     $validationRules = [
+//         'client_category_case_id' => ['required', 'integer', 'exists:client_category_case,id'],
+//         'remark' => ['nullable', 'string', 'max:1000'],
+//     ];
+
+//     foreach ($this->fingerprintColumns as $column) {
+//         $validationRules[$column] = ['nullable', 'string'];
+//     }
+
+//     $validatedData = $request->validate($validationRules);
+
+//     // 1. Check if a fingerprint already exists for this case ID
+//     $existing = ClientFingerprintModel::where('client_category_case_id', $validatedData['client_category_case_id'])->first();
+
+//     if ($existing) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'This case already has a recorded fingerprint.'
+//         ], 422); // Unprocessable Entity
+//     }
+
+//     // 2. Process base64 data
+//     foreach ($this->fingerprintColumns as $column) {
+//         if (!empty($validatedData[$column])) {
+//             $decoded = base64_decode($validatedData[$column], true);
+//             $validatedData[$column] = $decoded === false ? null : $decoded;
+//         }
+//     }
+
+//     DB::beginTransaction();
+//     try {
+//         $fingerprintRecord = ClientFingerprintModel::create($validatedData);
+
+//         $categoryCase = ClientCategoryCaseModel::find($fingerprintRecord->client_category_case_id);
+//         if ($categoryCase && $categoryCase->ClientCaseno) {
+//             $categoryCase->ClientCaseno->update(['fingerprint_status' => 'Success']);
+//         }
+
+//         DB::commit();
+
+//         return response()->json([
+//             'message' => 'Fingerprint data saved successfully.',
+//             'success' => true,
+//         ], 201);
+
+//     } catch (\Throwable $e) {
+//         DB::rollBack();
+//         return response()->json([
+//             'error' => 'Server Error',
+//             'message' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 }

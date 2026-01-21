@@ -13,18 +13,42 @@ import 'primeicons/primeicons.css'
 import axios from 'axios';
 import SelectComponent from '@/Components/SelectComponent.vue'
 import {genderOptions,BirthRegisterOptions,CivilStatusOptions,EducationOptions} from '@/Constant/Choices.js'
-// 1. Define props to receive the Inertia form object
+import CaptureDialog from './CaptureDialog.vue';
+import  Avatar  from 'primevue/avatar';
+import  Button from 'primevue/button';
+
+import Image from 'primevue/image';
+
+
 const props = defineProps({
     form: Object,
     prevStep: Function,
 });
 
-// 2. Define emits
-const emit = defineEmits(['nextStep']);
+const showCapture = ref(false);
+const photoPreviews = ref({
+    photo_front: null,
+    photo_left: null,
+    photo_right: null
+});
 
-// 3. Alias form for cleaner template usage
+const emit = defineEmits(['nextStep']);
 const form = props.form;
 
+watch(() => [form.photo_front, form.photo_left, form.photo_right], (newVals) => {
+    const keys = ['photo_front', 'photo_left', 'photo_right'];
+    newVals.forEach((val, index) => {
+        const key = keys[index];
+        if (val instanceof File) {
+            // Clean up old memory
+            if (photoPreviews.value[key]) URL.revokeObjectURL(photoPreviews.value[key]);
+            // Create new preview
+            photoPreviews.value[key] = URL.createObjectURL(val);
+        } else if (!val) {
+            photoPreviews.value[key] = null;
+        }
+    });
+}, { deep: true });
 
 const selectedAddress = computed({
     // GETTER: Pulls current values from the form when the component renders.
@@ -112,7 +136,7 @@ watch(
 
             <!-- Client's Name -->
             <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Client’s Name</label>
+                <label class="font-medium text-gray-700">Client’s Name <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2 space-y-3">
                     <TextInputField v-model="form.firstname" placeholder="First Name" class="w-full"
                         :message="form.errors.firstname" />
@@ -131,7 +155,7 @@ watch(
 
             <!-- Sex -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Sex</label>
+                <label class="font-medium text-gray-700">Sex <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <SelectBtnComponent v-model="form.sex" :options="genderOptions" :message="form.errors.sex"
                         class="col-span-2 w-full" />
@@ -140,7 +164,7 @@ watch(
 
             <!-- Birthdate -->
             <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Birthdate</label>
+                <label class="font-medium text-gray-700">Birthdate <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <BirthDatePicker v-model="form.birthdate" v-model:age="form.age" :message="form.errors.birthdate"
                         class="col-span-2 w-full" />
@@ -150,7 +174,7 @@ watch(
 
             <!-- Birth Place -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Birth Place</label>
+                <label class="font-medium text-gray-700">Birth Place <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.birth_place" :message="form.errors.birth_place" />
 
@@ -162,7 +186,7 @@ watch(
 
             <!-- Birth Registered with Local Register? -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Birth Registered with Local Registrar?</label>
+                <label class="font-medium text-gray-700">Birth Registered with Local Registrar? <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <SelectBtnComponent v-model="form.birth_registered_with_local" :options="BirthRegisterOptions"
                         :message="form.errors.birth_registered_with_local" class="col-span-2 w-full" />
@@ -187,7 +211,7 @@ watch(
 
             <!-- Civil Status -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Civil Status</label>
+                <label class="font-medium text-gray-700">Civil Status <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <SelectwithOthers name="Civil Status" v-model="form.civil_status" :options="CivilStatusOptions"
                         :message="form.errors.civil_status" class="col-span-2 w-full" />
@@ -197,7 +221,7 @@ watch(
 
             <!-- Religion -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Religion</label>
+                <label class="font-medium text-gray-700">Religion <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.religion" :message="form.errors.religion" />
                 </div>
@@ -206,7 +230,7 @@ watch(
 
             <!-- Dealect -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Dialect/s</label>
+                <label class="font-medium text-gray-700">Dialect/s <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.dialect" :message="form.errors.dialect" />
                 </div>
@@ -215,7 +239,7 @@ watch(
 
             <!-- Address in the Philippines -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Address in the Philippines</label>
+                <label class="font-medium text-gray-700">Address in the Philippines <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <RegionPicker v-model="selectedAddress" :errors="addressErrors" />
 
@@ -232,7 +256,7 @@ watch(
 
             <!-- Address in Malaysia -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Address in Malaysia</label>
+                <label class="font-medium text-gray-700">Address in Malaysia <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.address_in_malaysia" :message="form.errors.address_in_malaysia" />
                 </div>
@@ -241,7 +265,7 @@ watch(
 
             <!-- Education Attaintment -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Highest Educational Attaintment</label>
+                <label class="font-medium text-gray-700">Highest Educational Attaintment <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <RadioBtn v-model="form.education_attainment" :options="EducationOptions" name="education"
                         :message="form.errors.education_attainment" />
@@ -250,7 +274,7 @@ watch(
 
             <!-- Eligibility -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Eligibility</label>
+                <label class="font-medium text-gray-700">Eligibility </label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.eligibility" :message="form.errors.eligibility" />
                     <div v-if="form.eligibility">
@@ -266,7 +290,7 @@ watch(
 
             <!-- Skills -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Skills</label>
+                <label class="font-medium text-gray-700">Skills <span class="text-sm font-semibold text-red-500">*</span></label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.skills" :message="form.errors.skills" />
                 </div>
@@ -276,7 +300,7 @@ watch(
             <div class="grid grid-cols-3 gap-6 items-start py-2">
                 <!-- First Row (Foreign Income) -->
                 <div class="flex flex-col space-y-3">
-                    <label class="font-medium text-gray-700">Estimated Monthly Income</label>
+                    <label class="font-medium text-gray-700">Estimated Monthly Income <span class="text-sm font-semibold text-red-500">*</span></label>
 
                 </div>
 
@@ -307,10 +331,47 @@ watch(
 
 
 
-            <div class="flex flex-col space-y-3">
-
-
+               <div class="grid grid-cols-3 gap-3 items-start py-2">
+                <label class="font-medium text-gray-700">Capture Image<span class="text-sm font-semibold text-red-500">*</span></label>
+       <div class="col-span-2">
+    <div v-if="photoPreviews.photo_front || photoPreviews.photo_left || photoPreviews.photo_right" 
+         class="flex flex-wrap gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-dashed">
+        
+        <div v-for="(url, key) in photoPreviews" :key="key">
+            <div v-if="url" class="flex flex-col items-center gap-2">
+                <Image :src="url" width="120" preview class="rounded shadow-sm overflow-hidden border" />
+                <span class="text-[10px] uppercase font-bold text-slate-500">
+                    {{ key.split('_')[1] }} View
+                </span>
             </div>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <Button 
+            type="button"
+            :label="photoPreviews.photo_front ? 'Retake Photos' : 'Open Camera'" 
+            :icon="photoPreviews.photo_front ? 'pi pi-refresh' : 'pi pi-camera'"
+            :severity="photoPreviews.photo_front ? 'secondary' : 'primary'"
+            @click="showCapture = true" 
+        />
+        
+        <span v-if="!photoPreviews.photo_front" class="text-sm text-red-500 font-medium">
+            * Front photo is required
+        </span>
+    </div>
+
+    <CaptureDialog 
+        v-model:visible="showCapture" 
+        :form="form" 
+    />
+</div>
+            </div>
+
+
+   
+
+         
 
 
 

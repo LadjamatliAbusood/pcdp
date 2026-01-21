@@ -4,7 +4,7 @@ import AddFamilyMemberModal from './components/AddFamilyMemberModal.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import TextInputField from '@/Components/TextInputField.vue';
-
+import {genderOptions,relationshipOptions,CivilStatusOptions,EducationOptions,dataHealth} from '@/Constant/Choices.js'
 const props = defineProps({
     form: Object,
     prevStep: Function,
@@ -141,7 +141,10 @@ const capturePhoto = (index) => {
     }, "image/jpeg", 0.95);
 };
 
-
+const getHealthColor = (status) => {
+    const match = dataHealth.find(item => item.value === status);
+    return match ? match.color : '#475569'; 
+};
 
 </script>
 
@@ -183,13 +186,11 @@ const capturePhoto = (index) => {
             </div>
         </div>
         <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Age:</label>
-            <div class="col-span-2">{{ calculateAge(member.birthdate) }}</div>
-        </div>
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
             <label class="font-medium text-gray-700">Sex:</label>
             <div class="col-span-2">{{ getSexLabel(member.sex) }}</div>
         </div>
+       
+        
         <div class="grid grid-cols-3 gap-3 items-start py-1">
             <label class="font-medium text-gray-700">Civil Status:</label>
             <div class="col-span-2">{{ member.civil_status }}</div>
@@ -206,6 +207,34 @@ const capturePhoto = (index) => {
             <label class="font-medium text-gray-700">Skills/Occupation:</label>
             <div class="col-span-2">{{ member.skills_and_occupation }}</div>
         </div>
+
+
+         <div class="grid grid-cols-3 gap-3 items-start py-1">
+            <label class="font-medium text-gray-700">Est. Monthly Income</label>
+            <div class="col-span-2">{{ member.estimated_income_foriegn  }}
+                {{ member.estimated_code_currency  }} |
+
+                {{ member.estimated_income_local  }}
+                {{ member.estimated_code }}
+            </div>
+        </div>
+
+
+         <div class="grid grid-cols-3 gap-3 items-start py-1">
+    <label class="font-medium text-gray-700">Health Status</label>
+    <div class="col-span-2 flex items-center gap-2">
+        <span 
+            v-if="member.health_status"
+         
+            class="w-3 h-3 rounded-full flex-shrink-0" 
+            :style="{ backgroundColor: getHealthColor(member.health_status) }"
+        ></span>
+        
+        <span class="text-gray-700">
+            {{ member.health_status || 'N/A' }}
+        </span>
+    </div>
+</div>
     </div>
 
     <!-- Right: Photo / Camera -->

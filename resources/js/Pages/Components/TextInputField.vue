@@ -30,12 +30,12 @@ defineProps({
 <template>
     <div>
         <div class="mb-2">
-            <!-- <label for="name"
+            <label for="name"
              class="block text-md font-medium text-gray-700"
              >
              {{
                 name
-            }}</label> -->
+            }}</label>
             <InputText
             :placeholder="placeholder"
                 :type="type"

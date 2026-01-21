@@ -58,7 +58,14 @@ const generalMenu = ref([
    to: "/overview" },
   { label: "Client Records", 
   icon: "pi pi-id-card",  
-  to: "/client-records" },
+  to: "/client-records",
+    match: [
+      "/client-records",
+      "/client-recordsGenIntake",
+     
+    ],
+
+ },
   { label: "Case Management",
    icon: "pi pi-briefcase",
     },
@@ -74,7 +81,12 @@ const adminMenu = ref([
   { label: "Settings", 
   icon: "pi pi-cog", 
   
-  to: route('client-idpresented.index')
+  to: "/client-idpresented",
+    match: [
+      "/client-idpresented",
+      "/client-category",
+      "/client-type",
+    ],
   
  
 

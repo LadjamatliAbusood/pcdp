@@ -55,6 +55,10 @@ return new class extends Migration
             $table->string('estimated_income_local', 225);
             $table->string('estimated_code', 225)->nullable();
             $table->timestamps();
+            //photo
+        $table->string('photo_front')->nullable();
+        $table->string('photo_left')->nullable();
+        $table->string('photo_right')->nullable();
         });
     }
 
