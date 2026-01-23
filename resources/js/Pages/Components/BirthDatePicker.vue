@@ -148,7 +148,7 @@ function onlyNumberKey(e) {
     <Dropdown
       v-model="form.birthMonth"
       :options="months"
-      class="w-full"
+      class="w-full font-semibold rounded-lg block"
       placeholder="Month"
     />
 
@@ -166,7 +166,7 @@ function onlyNumberKey(e) {
     <!-- Year Input -->
     <InputText
       v-model="form.birthYear"
-      class="w-full"
+      class="w-full font-semibold rounded-lg block"
       placeholder="Year"
       type="text"
         @keypress="onlyNumberKey"

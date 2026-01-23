@@ -17,9 +17,9 @@ return new class extends Migration
           $table->foreignId('client_category_case_id')
                   ->constrained('client_category_case')
                   ->onDelete('cascade');
-            
+             $table->string('other_category', 225)->nullable();
             // Assessment Details
-            $table->string('typeofclient', 225);
+            // $table->string('typeofclient', 225);
             $table->string('id_presented', 225);
             $table->string('length_stay_in_malaysia', 225);
               $table->unsignedTinyInteger('length_stay_in_malaysia_options');

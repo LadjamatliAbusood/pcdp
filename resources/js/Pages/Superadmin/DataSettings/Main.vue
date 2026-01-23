@@ -33,8 +33,8 @@ const page = usePage();
 // Menu items with unique keys
 const adminMenu = ref([
   { label: "Client ID Presented", icon: "pi pi-id-card", key: "idpresented", command: () => goTo('client-idpresented.index') },
-  { label: "Client Categories", icon: "pi pi-users", key: "client-category", command: () => goTo('client-category.index') },
-  { label: "Client Types", icon: "pi pi-user", key: "client-type", command: () => goTo('client-type.index') },
+  { label: "Client Types", icon: "pi pi-users", key: "client-category", command: () => goTo('client-category.index') },
+  // { label: "Client Types", icon: "pi pi-user", key: "client-type", command: () => goTo('client-type.index') },
 ]);
 
 // Active key for current page

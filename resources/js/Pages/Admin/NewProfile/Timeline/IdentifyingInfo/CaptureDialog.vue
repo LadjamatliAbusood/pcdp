@@ -1,161 +1,192 @@
 <script setup>
-import { ref, computed } from 'vue';
-import Dialog from 'primevue/dialog';
-import Button from 'primevue/button';
-import Badge from 'primevue/badge';
+import { ref, computed, watch, onMounted } from 'vue'
+import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
+import Badge from 'primevue/badge'
 
 const props = defineProps({
-    visible: Boolean,
-    form: Object,
-});
+  visible: Boolean,
+  form: Object,
+})
 
-const emit = defineEmits(['update:visible']);
+const emit = defineEmits(['update:visible'])
 
-// Template Refs
-const videoPlayer = ref(null);
-const canvas = ref(null);
-const stream = ref(null);
+const FORM_STORAGE_KEY = 'unfinishedClientFormPhotos'
 
-// Local Previews (since form[key] will now hold a File object)
+// Refs for video & canvas
+const videoPlayer = ref(null)
+const canvas = ref(null)
+const stream = ref(null)
+
+// Keys for photos
+const imageKeys = ['photo_front', 'photo_left', 'photo_right']
+
+// Preview URLs (Now storing Base64 strings)
 const previews = ref({
-    photo_front: null,
-    photo_left: null,
-    photo_right: null
-});
+  photo_front: null,
+  photo_left: null,
+  photo_right: null
+})
 
-const imageKeys = ['photo_front', 'photo_left', 'photo_right'];
+/* ============================================================
+   HELPERS: Convert between Base64 and File objects
+   ============================================================ */
+const dataURLtoFile = (dataurl, filename) => {
+  if (!dataurl) return null
+  let arr = dataurl.split(','),
+    mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]),
+    n = bstr.length,
+    u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
 
-// Logic state
-const hasFront = computed(() => !!props.form.photo_front);
-const allCaptured = computed(() => !!(props.form.photo_front && props.form.photo_left && props.form.photo_right));
-
+// Computed
+const hasFront = computed(() => !!props.form.photo_front)
+const allCaptured = computed(() =>
+  imageKeys.every(key => !!props.form[key])
+)
 const currentStep = computed(() => {
-    if (!props.form.photo_front) return 'Front View';
-    if (!props.form.photo_left) return 'Left Profile';
-    if (!props.form.photo_right) return 'Right Profile';
-    return 'All Photos Captured';
-});
+  if (!props.form.photo_front) return 'Front View'
+  if (!props.form.photo_left) return 'Left Profile'
+  if (!props.form.photo_right) return 'Right Profile'
+  return 'All Photos Captured'
+})
 
+// Camera control
 const startCamera = async () => {
-    try {
-        stream.value = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user', width: 1280, height: 720 } 
-        });
-        videoPlayer.value.srcObject = stream.value;
-    } catch (err) {
-        console.error("Error accessing camera:", err);
-    }
-};
+  try {
+    stream.value = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'user', width: 1280, height: 720 } 
+    })
+    videoPlayer.value.srcObject = stream.value
+  } catch (err) {
+    console.error('Camera error:', err)
+  }
+}
 
 const stopCamera = () => {
-    if (stream.value) {
-        stream.value.getTracks().forEach(track => track.stop());
-        stream.value = null;
-    }
-};
+  if (stream.value) {
+    stream.value.getTracks().forEach(track => track.stop())
+    stream.value = null
+  }
+}
 
+// Take photo
 const takePhoto = () => {
-    const video = videoPlayer.value;
-    const ctx = canvas.value.getContext('2d');
-    
-    canvas.value.width = video.videoWidth;
-    canvas.value.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+  const video = videoPlayer.value
+  const ctx = canvas.value.getContext('2d')
+  canvas.value.width = video.videoWidth
+  canvas.value.height = video.videoHeight
+  ctx.drawImage(video, 0, 0)
 
-    // Identify which field to fill
-    let targetKey = '';
-    if (!props.form.photo_front) targetKey = 'photo_front';
-    else if (!props.form.photo_left) targetKey = 'photo_left';
-    else if (!props.form.photo_right) targetKey = 'photo_right';
+  // Pick next photo to capture
+  let targetKey = imageKeys.find(k => !props.form[k])
+  if (!targetKey) return
 
-    if (!targetKey) return;
+  // Convert to Base64 (Quality 0.9)
+  const dataUrl = canvas.value.toDataURL('image/jpeg', 0.9)
+  
+  // 1. Update visual preview
+  previews.value[targetKey] = dataUrl
 
-    // Convert to Blob/File (Matches your family members logic)
-    canvas.value.toBlob((blob) => {
-        if (!blob) return;
+  // 2. Attach real File object to the form for Inertia/Laravel
+  props.form[targetKey] = dataURLtoFile(dataUrl, `${targetKey}.jpg`)
+  
+  persistPhotos()
+}
 
-        // 1. Create File object for form submission
-        const file = new File([blob], `${targetKey}.jpg`, { type: "image/jpeg" });
-        props.form[targetKey] = file;
+// Clear photo
+const clearPhoto = key => {
+  props.form[key] = null
+  previews.value[key] = null
+  persistPhotos()
+}
 
-        // 2. Create Preview URL for UI display
-        if (previews.value[targetKey]) URL.revokeObjectURL(previews.value[targetKey]);
-        previews.value[targetKey] = URL.createObjectURL(blob);
+// Persist previews (Base64 strings) to localStorage
+const persistPhotos = () => {
+  const payload = {}
+  imageKeys.forEach(k => { 
+    if (previews.value[k]) payload[k] = previews.value[k] 
+  })
+  
+  if (Object.keys(payload).length) {
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(payload))
+  } else {
+    localStorage.removeItem(FORM_STORAGE_KEY)
+  }
+}
 
-    }, "image/jpeg", 0.95);
-};
-
-const clearPhoto = (key) => {
-    props.form[key] = null;
-    if (previews.value[key]) {
-        URL.revokeObjectURL(previews.value[key]);
-        previews.value[key] = null;
+// Restore from localStorage on mount
+onMounted(() => {
+  const saved = localStorage.getItem(FORM_STORAGE_KEY)
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      imageKeys.forEach(k => {
+        if (parsed[k]) {
+          // Restore the preview string
+          previews.value[k] = parsed[k]
+          // Re-create the File object so form validation passes
+          props.form[k] = dataURLtoFile(parsed[k], `${k}.jpg`)
+        }
+      })
+    } catch (e) {
+      console.error('Failed to restore photos', e)
     }
-};
+  }
+})
 
+// Save & close dialog
 const saveAndClose = () => {
-    emit('update:visible', false);
-};
+  persistPhotos()
+  emit('update:visible', false)
+}
 </script>
 
 <template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="$emit('update:visible', $event)"
-        modal 
-        header="Capture Identifying Photos" 
-        :style="{ width: '95vw', maxWidth: '450px' }"
-        @show="startCamera"
-        @hide="stopCamera"
-    >
-        <div class="flex flex-col gap-4">
-            <div class="relative overflow-hidden rounded-xl bg-slate-900 aspect-[4/3] flex items-center justify-center border shadow-inner">
-                <video ref="videoPlayer" autoplay playsinline class="w-full h-full object-cover mirror"></video>
-                <canvas ref="canvas" class="hidden"></canvas>
-                
-                <div class="absolute top-3 left-3">
-                    <Badge :value="currentStep" :severity="allCaptured ? 'success' : 'warning'" class="shadow-md"></Badge>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3">
-                <div v-for="key in imageKeys" :key="key" class="flex flex-col items-center gap-1">
-                    <div class="relative group border-2 border-dashed rounded-lg h-24 w-full flex items-center justify-center bg-slate-50 overflow-hidden transition-all"
-                         :class="{'border-blue-400 bg-blue-50': !form[key] && currentStep.toLowerCase().includes(key.split('_')[1])}">
-                        
-                        <img v-if="previews[key]" :src="previews[key]" class="h-full w-full object-cover" />
-                        <i v-else class="pi pi-camera text-slate-300 text-2xl"></i>
-
-                        <div v-if="previews[key]" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                             <Button icon="pi pi-trash" severity="danger" rounded text @click="clearPhoto(key)" />
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                        {{ key.split('_')[1] }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-2 pt-2">
-                <Button 
-                    v-if="!allCaptured"
-                    label="Capture Photo" 
-                    icon="pi pi-camera" 
-                    class="w-full py-3"
-                    @click="takePhoto" 
-                />
-
-                <Button 
-                    v-if="hasFront"
-                    :label="allCaptured ? 'Complete' : 'Save Captured & Exit'" 
-                    :icon="allCaptured ? 'pi pi-check-circle' : 'pi pi-save'" 
-                    :severity="allCaptured ? 'success' : 'secondary'"
-                    :variant="allCaptured ? 'default' : 'outlined'"
-                    class="w-full"
-                    @click="saveAndClose" 
-                />
-            </div>
+  <Dialog
+    :visible="visible"
+    @update:visible="$emit('update:visible', $event)"
+    modal
+    header="Capture Client Photos"
+    :style="{ width: '95vw', maxWidth: '450px' }"
+    @show="startCamera"
+    @hide="stopCamera"
+  >
+    <div class="flex flex-col gap-4">
+      <div class="relative overflow-hidden rounded-xl bg-slate-900 aspect-[4/3] flex items-center justify-center border shadow-inner">
+        <video ref="videoPlayer" autoplay playsinline class="w-full h-full object-cover mirror"></video>
+        <canvas ref="canvas" class="hidden"></canvas>
+        <div class="absolute top-3 left-3">
+          <Badge :value="currentStep" :severity="allCaptured ? 'success' : 'warning'" class="shadow-md"/>
         </div>
-    </Dialog>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div v-for="key in imageKeys" :key="key" class="flex flex-col items-center gap-1">
+          <div class="relative group border-2 border-dashed rounded-lg h-24 w-full flex items-center justify-center bg-slate-50 overflow-hidden transition-all"
+               :class="{'border-blue-400 bg-blue-50': !props.form[key] && currentStep.toLowerCase().includes(key.split('_')[1])}">
+            
+            <img v-if="previews[key]" :src="previews[key]" class="h-full w-full object-cover" />
+            <i v-else class="pi pi-camera text-slate-300 text-2xl"></i>
+
+            <div v-if="previews[key]" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Button icon="pi pi-trash" severity="danger" rounded text @click="clearPhoto(key)" />
+            </div>
+          </div>
+          <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">{{ key.split('_')[1] }}</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-2">
+        <Button v-if="!allCaptured" label="Capture Photo" icon="pi pi-camera" class="w-full py-3" @click="takePhoto"/>
+        <Button v-if="hasFront" :label="allCaptured ? 'Complete' : 'Save & Exit'" :icon="allCaptured ? 'pi pi-check-circle' : 'pi pi-save'" :severity="allCaptured ? 'success' : 'secondary'" class="w-full" @click="saveAndClose"/>
+      </div>
+    </div>
+  </Dialog>
 </template>
 

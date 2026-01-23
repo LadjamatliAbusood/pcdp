@@ -48,6 +48,8 @@ function handleScanAgain() {
 }
 
 function handleFillFromScratch() {
+  localStorage.removeItem('unfinishedClientForm');
+  localStorage.removeItem('unfinishedClientFormPhotos');
   router.visit(route('new-client'))
 }
 
@@ -62,45 +64,29 @@ const getDate = (date) =>
 function handleContinue() {
   if (!matchedUserData.value) return;
 
-  if (!matchedUserData.value.id) {
-    alert("Error: Client ID is missing. Cannot continue with existing data.");
-    return;
-  }
-
- 
   const data = matchedUserData.value;
 
-
   const clientCaseno = Array.isArray(data.client_caseno) ? data.client_caseno[0] : data.client_caseno;
-  const categoryCase = clientCaseno ? (Array.isArray(clientCaseno.category_case) ? clientCaseno.category_case[0] : clientCaseno.category_case) : null;
 
-  let assessmentData = {};
-  let servicesData = {};
-  let familyMembers = [];
-  let clientCategoryId = null;
-
-  if (categoryCase) {
-    assessmentData = categoryCase.client_assessment || {};
-    servicesData = categoryCase.client_services || {};
-    familyMembers = categoryCase.client_family_members || [];
-    clientCategoryId = categoryCase.client_category_id;
-  }
-
-
-
+  // 1. Prepare the data object
   const dataToSend = {
-
     ...data,
     client_id: data.id,
     case_no: data.case_no || clientCaseno?.case_no,
-    client_category_id: clientCategoryId,
+    
+    // 2. CLEAR THE PHOTOS
+    // This ensures the user MUST capture new photos in Main.vue
+    photo_front: null,
+    photo_left: null,
+    photo_right: null,
   };
 
+  // 3. Clean up the object structure
   delete dataToSend.client_caseno;
   delete dataToSend.id; 
 
+  // 4. Send to the form
   const encodedData = encodeURIComponent(JSON.stringify(dataToSend));
-
   router.visit(route('new-client', { prefill: encodedData }));
 }
 </script>

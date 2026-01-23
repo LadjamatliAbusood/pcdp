@@ -41,7 +41,7 @@ return new class extends Migration
             $table->string('address_in_ph_brgy', 225);
             $table->string('address_in_ph_street', 225)->nullable();
             $table->string('address_in_ph_house_no', 225)->nullable();
-            $table->string('address_in_malaysia', 225);
+            $table->string('address_in_malaysia', 225)->nullable();
 
             // Education & Eligibility
             $table->unsignedTinyInteger('education_attainment');

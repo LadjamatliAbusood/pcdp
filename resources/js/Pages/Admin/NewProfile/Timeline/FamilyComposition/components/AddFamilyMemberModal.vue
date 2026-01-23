@@ -15,11 +15,12 @@ import CurrencyConvert from "@/Components/CurrencyConvert.vue";
 import useNotify from "@/Message/Notify";
 import {genderOptions,relationshipOptions,CivilStatusOptions,EducationOptions,dataHealth} from '@/Constant/Choices.js'
 import SelectHealth from "@/Components/SelectHealth.vue";
+import FamCaptureDialog from "./FamCaptureDialog.vue";
+
 const emit = defineEmits(['member-saved']);
 const notify = useNotify();
 const isVisible = ref(false);
-
-
+const showCapture = ref(false); // Controls the Camera Dialog
 const currentEditingIndex = ref(null);
 
 const memberForm = useForm({
@@ -39,7 +40,16 @@ const memberForm = useForm({
     estimated_income_local: null,
     estimated_code: 'PHP',
     health_status: null,
-    fam_img:null,
+    // fam_img:null,
+
+
+    fam_img_front: null,
+    fam_img_left: null,
+    fam_img_right: null,
+    // Previews (needed for UI display only)
+    fam_img_front_preview: null,
+    fam_img_left_preview: null,
+    fam_img_right_preview: null,
 });
 
 
@@ -111,18 +121,21 @@ const closeModal = () => {
 
 
 const saveMember = () => {
-    // 1. Run client-side validation
     if (!validateForm()) {
         notify.error('Some fields are required.')
-
-        console.warn('Modal validation failed. Cannot save member.');
         return;
     }
-    
-    // 2. If valid, emit the member data AND the editing index (which might be null)
-    emit('member-saved', { ...memberForm.data() }, currentEditingIndex.value);
+    // Instead of saving, open the capture dialog
+    showCapture.value = true;
+};
 
-    // 3. Close the modal
+const handleCaptureDone = () => {
+    if(!memberForm.fam_img_front) {
+        notify.error('At least the front photo is required.');
+        return;
+    }
+    emit('member-saved', { ...memberForm.data() }, currentEditingIndex.value);
+    showCapture.value = false;
     closeModal();
 };
 
@@ -302,5 +315,11 @@ defineExpose({ openModal });
                 </div>
             </template>
         </Dialog>
+
+        <FamCaptureDialog 
+            v-model:visible="showCapture" 
+            :memberForm="memberForm" 
+            @update:visible="(val) => !val ? handleCaptureDone() : null"
+        />
     </div>
 </template>

@@ -120,7 +120,19 @@ onMounted(async()=>{
     
 });
 
+// Change 'form' to 'props.form'
+const isOtherSelected = computed(() => {
+    // Find the category object that matches the selected ID
+    const selected = categories.value.find(c => c.value === props.form.client_category_id);
+    return selected?.label?.toLowerCase() === 'others';
+});
 
+// Change 'form' to 'props.form' in the watcher
+watch(() => props.form.client_category_id, (newVal) => {
+    if (!isOtherSelected.value) {
+        props.form.other_category = null; // or ''
+    }
+});
 
 const idpresented = ref([]);
 onMounted(async()=>{
@@ -138,28 +150,21 @@ onMounted(async()=>{
 
 
 
-// const idpresented = ref([]);
-// onMounted(async () => {
-//     const res = await axios.get('/client-idpresented/idpresented');
-//     idpresented.value = res.data.idpresented.map(cat => ({
-//         label: cat.id_presented,
-//         value: cat.id,
-//     }));
-// });
 
-const clienttype = ref([]);
-onMounted(async()=>{
-    try{
-        const res = await axios.get('/client-type/clienttype');
-            clienttype.value = res.data.clienttype.map(cat => ({
-  label: cat.typeofclient,
-  value: cat.typeofclient,
-}));
-  } catch (error) {
-    console.error(error);
-  }
+
+// const clienttype = ref([]);
+// onMounted(async()=>{
+//     try{
+//         const res = await axios.get('/client-type/clienttype');
+//             clienttype.value = res.data.clienttype.map(cat => ({
+//   label: cat.typeofclient,
+//   value: cat.typeofclient,
+// }));
+//   } catch (error) {
+//     console.error(error);
+//   }
     
-});
+// });
 
 </script>
 
@@ -172,7 +177,7 @@ onMounted(async()=>{
 
     <form @submit.prevent>
 
-         <div class="grid grid-cols-3 gap-4 items-start py-2">
+         <!-- <div class="grid grid-cols-3 gap-4 items-start py-2">
                 <label class="font-medium text-gray-700">Type of Client <span class="text-sm font-semibold text-red-500">*</span></label>
                 <SelectComponent
                 v-model="form.typeofclient"
@@ -180,10 +185,10 @@ onMounted(async()=>{
                 :message="form.errors.typeofclient"
                 placeholder="Select Client"
                 class="col-span-2 w-full"/>
-            </div>
+            </div> -->
 
            <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Client ID Presented <span class="text-sm font-semibold text-red-500">*</span></label>
+                <label class="font-medium text-gray-700">ID Presented <span class="text-sm font-semibold text-red-500">*</span></label>
                 <SelectComponent
                 v-model="form.id_presented"
                 :options="idpresented"
@@ -193,15 +198,31 @@ onMounted(async()=>{
             </div>
 
 
-             <div class="grid grid-cols-3 gap-4 items-start py-2">
-                <label class="font-medium text-gray-700">Client Category <span class="text-sm font-semibold text-red-500">*</span></label>
-                <SelectComponent
-                v-model="form.client_category_id"
-                :options="categories"
-                :message="form.errors.client_category_id"
-                placeholder="Select Client Category"
-                class="col-span-2 w-full"/>
-            </div>
+        <div class="grid grid-cols-3 gap-4 items-start py-2">
+    <label class="font-medium text-gray-700">
+        Type of Client<span class="text-sm font-semibold text-red-500">*</span>
+    </label>
+    <SelectComponent
+        v-model="form.client_category_id"
+        :options="categories"
+        :message="form.errors.client_category_id"
+        placeholder="Select Client Category"
+        class="col-span-2 w-full"
+    />
+</div>
+
+
+    <div v-if="isOtherSelected" class="grid grid-cols-3 gap-4 items-start py-2">
+        <label class="font-medium text-gray-700 ">
+            Please Specify <span class="text-sm font-semibold text-red-500">*</span>
+        </label>
+        <TextInputField
+            v-model="form.other_category"
+            :message="form.errors.other_category"
+            class="col-span-2 w-full"
+        />
+    </div>
+
 
       <!-- Stay in malaysia -->
 <div class="grid grid-cols-3 gap-4 items-start py-2">

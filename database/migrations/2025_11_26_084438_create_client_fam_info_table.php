@@ -19,7 +19,9 @@ return new class extends Migration
                   ->onDelete('cascade');
             
             // Family Member Details
-            $table->string('fam_img');
+            $table->string('fam_img_front');
+             $table->string('fam_img_left')->nullable();
+              $table->string('fam_img_right')->nullable();
             $table->string('nickname')->nullable();
             $table->string('firstname', 225);
             $table->string('middlename', 225)->nullable();

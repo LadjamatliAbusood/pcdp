@@ -76,6 +76,7 @@ if (empty($categories)) {
     // 5️⃣ ALL categories for MultiSelect
     $allCategories = ClientCategoryModel::query()
         ->where('status', 1)
+        
         ->orderBy('category')
         ->distinct()
         ->pluck('category')
@@ -95,6 +96,7 @@ if (empty($categories)) {
         ],
         'searchTerm' => $search,
         'categories' => $allCategories,
+        
     ]);
     }
 
@@ -121,31 +123,49 @@ if (empty($categories)) {
             ->toArray();
     }
 
-    private function buildCaseData($client, $caseno): array
-    {
-        $latestCategoryCase = collect($caseno->CategoryCase)
-            ->sortByDesc('created_at')
-            ->first();
+  private function buildCaseData($client, $caseno): array
+{
+    $latestCategoryCase = collect($caseno->CategoryCase)
+        ->sortByDesc('created_at')
+        ->first();
 
-        $categories = collect($caseno->CategoryCase)->map(fn ($case) => [
+    $categories = collect($caseno->CategoryCase)->map(function ($case) use ($client) {
+
+        $rawCategory = $case->ClientCategory?->category ?? 'N/A';
+        $categoryName = $rawCategory; 
+
+        $assessment = $case->ClientAssessment;
+        
+       
+      if (str_contains(strtolower($rawCategory), 'other')) {
+    $customValue = $assessment->other_category ?? null;
+ 
+    if (!empty($customValue)) {
+        $categoryName = $customValue; 
+    }
+
+}
+
+        return [
             'client_info' => $client->toArray(),
-            'category' => $case->ClientCategory?->category,
+            'category' => $categoryName, 
             'stay_duration' => $case->stay_duration,
-            'assessment' => $case->ClientAssessment?->toArray(),
+            'assessment' => $assessment ? $assessment->toArray() : null, // Ensure this isn't null
             'services' => $case->ClientServices?->toArray(),
             'family_members' => collect($case->ClientFamilyMembers)->map(fn ($f) => $f->toArray())->toArray(),
             'created_at' => $case->created_at,
-        ]);
-
-        return [
-            'display_case_no' => $caseno->case_no,
-            'category_count' => $categories->count(),
-            'all_category_cases' => $categories->toArray(),
-            'all_categories_names' => $categories->pluck('category')->unique()->values()->toArray(),
-            'latest_client_info' => $client->toArray(),
-            'latest_date_raw' => optional($latestCategoryCase)->created_at,
         ];
-    }
+    });
+
+    return [
+        'display_case_no' => $caseno->case_no,
+        'category_count' => $categories->count(),
+        'all_category_cases' => $categories->toArray(),
+        'all_categories_names' => $categories->pluck('category')->unique()->values()->toArray(),
+        'latest_client_info' => $client->toArray(),
+        'latest_date_raw' => optional($latestCategoryCase)->created_at,
+    ];
+}
 
     private function mergeCaseData(array $existing, array $incoming): array
     {

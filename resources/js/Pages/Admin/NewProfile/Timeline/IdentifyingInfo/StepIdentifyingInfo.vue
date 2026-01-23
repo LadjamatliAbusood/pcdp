@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch,ref } from 'vue'; 
+import { computed, onMounted, watch, ref } from 'vue'; 
 import ChipCom from '@/Components/ChipCom.vue';
 import TextInputField from '@/Components/TextInputField.vue';
 import BirthDatePicker from '@/Components/BirthDatePicker.vue'
@@ -12,13 +12,13 @@ import DatePickerComponent from '@/Components/DatePickerComponent.vue';
 import 'primeicons/primeicons.css'
 import axios from 'axios';
 import SelectComponent from '@/Components/SelectComponent.vue'
-import {genderOptions,BirthRegisterOptions,CivilStatusOptions,EducationOptions} from '@/Constant/Choices.js'
+import { genderOptions, BirthRegisterOptions, CivilStatusOptions, EducationOptions } from '@/Constant/Choices.js'
 import CaptureDialog from './CaptureDialog.vue';
-import  Avatar  from 'primevue/avatar';
-import  Button from 'primevue/button';
-
+import Avatar from 'primevue/avatar';
+import Button from 'primevue/button';
 import Image from 'primevue/image';
 
+const FORM_PHOTO_KEY = 'unfinishedClientFormPhotos';
 
 const props = defineProps({
     form: Object,
@@ -35,77 +35,122 @@ const photoPreviews = ref({
 const emit = defineEmits(['nextStep']);
 const form = props.form;
 
-watch(() => [form.photo_front, form.photo_left, form.photo_right], (newVals) => {
-    const keys = ['photo_front', 'photo_left', 'photo_right'];
-    newVals.forEach((val, index) => {
-        const key = keys[index];
-        if (val instanceof File) {
-            // Clean up old memory
-            if (photoPreviews.value[key]) URL.revokeObjectURL(photoPreviews.value[key]);
-            // Create new preview
-            photoPreviews.value[key] = URL.createObjectURL(val);
-        } else if (!val) {
-            photoPreviews.value[key] = null;
-        }
-    });
-}, { deep: true });
+/* =========================
+   WATCH FORM FILES TO CREATE PREVIEWS
+========================= */
+const dataURLtoFile = (dataurl, filename) => {
+    if (!dataurl || typeof dataurl !== 'string') return null;
+    let arr = dataurl.split(','),
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
 
+/* =========================
+   LOCAL STORAGE HELPERS
+========================= */
+watch(
+    () => [form.photo_front, form.photo_left, form.photo_right],
+    (newVals) => {
+        const keys = ['photo_front', 'photo_left', 'photo_right'];
+        newVals.forEach((val, index) => {
+            const key = keys[index];
+            
+            // If it's a new file from the camera
+            if (val instanceof File) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photoPreviews.value[key] = e.target.result;
+                    persistPhotos(); 
+                };
+                reader.readAsDataURL(val);
+            } else if (!val) {
+                photoPreviews.value[key] = null;
+                persistPhotos();
+            }
+        });
+    },
+    { deep: true }
+);
+
+const persistPhotos = () => {
+    const payload = {};
+    ['photo_front', 'photo_left', 'photo_right'].forEach(key => {
+        if (photoPreviews.value[key]) payload[key] = photoPreviews.value[key];
+    });
+    if (Object.keys(payload).length) {
+        localStorage.setItem(FORM_PHOTO_KEY, JSON.stringify(payload));
+    } else {
+        localStorage.removeItem(FORM_PHOTO_KEY);
+    }
+};
+
+const restorePhotos = () => {
+    const saved = localStorage.getItem(FORM_PHOTO_KEY);
+    if (!saved) return;
+
+    try {
+        const parsed = JSON.parse(saved);
+        ['photo_front', 'photo_left', 'photo_right'].forEach(key => {
+            if (parsed[key]) {
+                // 1. Set the visual preview
+                photoPreviews.value[key] = parsed[key];
+                // 2. CONVERT TO FILE: This satisfies Laravel's validation
+                form[key] = dataURLtoFile(parsed[key], `${key}.jpg`);
+            }
+        });
+    } catch (e) {
+        console.error('Failed to restore photos', e);
+    }
+};
+
+onMounted(() => {
+    restorePhotos();
+});
+/* =========================
+   OTHER EXISTING CODE
+========================= */
 const selectedAddress = computed({
-    // GETTER: Pulls current values from the form when the component renders.
     get() {
         return {
             region: form.address_in_ph_region,
             province: form.address_in_ph_province,
             city: form.address_in_ph_city,
             barangay: form.address_in_ph_brgy,
-            // street: form.address_in_ph_street,
-            // house_no: form.address_in_ph_house_no,
-            
         };
     },
-    // SETTER: Updates the form object immediately when the RegionPicker changes.
     set(newVal) {
         form.address_in_ph_region = newVal.region;
         form.address_in_ph_province = newVal.province;
         form.address_in_ph_city = newVal.city;
         form.address_in_ph_brgy = newVal.barangay;
-        // form.address_in_ph_street = newVal.street;
-        // form.address_in_ph_house_no = newVal.house_no;
     },
 });
-
 
 const addressErrors = computed(() => ({
     region: form.errors.address_in_ph_region,
     province: form.errors.address_in_ph_province,
     city: form.errors.address_in_ph_city,
     barangay: form.errors.address_in_ph_brgy,
-    
 }));
 
-// Options definitions (no change needed here)
-
-
-// Function to emit the event to the parent
 const triggerNextStep = () => {
     emit('nextStep');
 };
 
 watch(
-    () => form.eligibility, // Watch the eligibility field
+    () => form.eligibility,
     (newValue) => {
-       
-        if (!newValue) {
-            form.eligibility_date_acquired = null;
-        }
+        if (!newValue) form.eligibility_date_acquired = null;
     }
 );
-
-
-
-
-
 </script>
+
 
 <template>
     <div class="space-y-6 ">
@@ -256,7 +301,7 @@ watch(
 
             <!-- Address in Malaysia -->
             <div class="grid grid-cols-3 gap-3 items-start py-2">
-                <label class="font-medium text-gray-700">Address in Malaysia <span class="text-sm font-semibold text-red-500">*</span></label>
+                <label class="font-medium text-gray-700">Address in Malaysia </label>
                 <div class="col-span-2">
                     <TextInputField v-model="form.address_in_malaysia" :message="form.errors.address_in_malaysia" />
                 </div>
@@ -335,11 +380,11 @@ watch(
                 <label class="font-medium text-gray-700">Capture Image<span class="text-sm font-semibold text-red-500">*</span></label>
        <div class="col-span-2">
     <div v-if="photoPreviews.photo_front || photoPreviews.photo_left || photoPreviews.photo_right" 
-         class="flex flex-wrap gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-dashed">
+         class="flex flex-wrap gap-4 mb-6 p-4 ">
         
         <div v-for="(url, key) in photoPreviews" :key="key">
             <div v-if="url" class="flex flex-col items-center gap-2">
-                <Image :src="url" width="120" preview class="rounded shadow-sm overflow-hidden border" />
+                <Image :src="url" width="140" preview class="rounded shadow-sm overflow-hidden border" />
                 <span class="text-[10px] uppercase font-bold text-slate-500">
                     {{ key.split('_')[1] }} View
                 </span>

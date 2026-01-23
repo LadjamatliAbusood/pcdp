@@ -6,7 +6,6 @@ const props = defineProps({
     value: String
 });
 
-// 1. Map the exact colors from your image
 const defaultMapping = {
     'Deportee': { bg: '#F3FBD8', text: '#5FAF1E', border: '#9AD84B' },
     'Repatriates': { bg: '#e0f2fe', text: '#0369a1', border: '#4DA3FF' }, 
@@ -16,26 +15,32 @@ const defaultMapping = {
     'Carry-over': { bg: '#E9F9EF', text: '#2F9E44', border: '#4FCB71' },
 };
 
-// 2. Generator for new categories (Consistently Random)
-const generateDynamicColor = (str) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    // Use HSL for a nice "pastel" look that matches the image style
-    const h = Math.abs(hash) % 360; 
-    return {
-        bg: `hsl(${h}, 100%, 97%)`,
-        text: `hsl(${h}, 70%, 40%)`,
-        border: `hsl(${h}, 70%, 80%)`
-    };
+// Style for the "Others" prefix
+const otherPrefixStyle = {
+    backgroundColor: '#f1f5f9',
+    color: '#475569',
+    border: '1.5px solid #cbd5e1',
+    padding: '2px 10px',
+    borderRadius: '999px',
+    fontWeight: '700',
+    fontSize: '10px',
 };
+
+// Logic to determine if this is a custom category
+const isCustom = computed(() => {
+    return props.value && !defaultMapping[props.value] && props.value !== 'N/A';
+});
 
 const tagStyle = computed(() => {
     const category = props.value || 'N/A';
     
-    // Check if it exists in the image defaults
-    const color = defaultMapping[category] || generateDynamicColor(category);
+    // Default mapping color
+    let color = defaultMapping[category];
+
+    // If it's custom, give it a unique "Hue" (e.g., Orange/Amber)
+    if (!color) {
+        color = { bg: '#FFF9DB', text: '#E67E22', border: '#FAB005' };
+    }
 
     return {
         backgroundColor: color.bg,
@@ -51,7 +56,13 @@ const tagStyle = computed(() => {
 </script>
 
 <template>
-    <Tag :style="tagStyle">
-        <span class="whitespace-nowrap">{{ value || 'N/A' }}</span>
-    </Tag>
+    <div class="flex items-center gap-2">
+        <Tag v-if="isCustom" :style="otherPrefixStyle">
+            <span class="uppercase">Others</span>
+        </Tag>
+
+        <Tag :style="tagStyle">
+            <span class="whitespace-nowrap">{{ value || 'N/A' }}</span>
+        </Tag>
+    </div>
 </template>

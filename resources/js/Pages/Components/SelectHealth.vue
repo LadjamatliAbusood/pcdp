@@ -76,11 +76,11 @@ const getSelectedOption = (val) => {
             class="w-3 h-3 rounded-full" 
             :style="{ backgroundColor: getSelectedOption(slotProps.value)?.color || '#cbd5e1' }"
           ></span>
-          <span class="text-sm text-gray-700">
+          <span class="font-semibold rounded-lg block">
             {{ getSelectedOption(slotProps.value)?.label }}
           </span>
         </div>
-        <span v-else class="text-gray-400 text-sm">
+        <span v-else class="font-semibold rounded-lg block">
           {{ placeholder }}
         </span>
       </template>
@@ -99,7 +99,7 @@ const getSelectedOption = (val) => {
               class="w-3.5 h-3.5 rounded-full flex-shrink-0" 
               :style="{ backgroundColor: slotProps.option.color }"
             ></span>
-            <span class="text-sm text-gray-700">{{ slotProps.option.label }}</span>
+            <span class="text-sm text-gray-700 font-semibold rounded-lg block">{{ slotProps.option.label }}</span>
           </div>
         </div>
       </template>

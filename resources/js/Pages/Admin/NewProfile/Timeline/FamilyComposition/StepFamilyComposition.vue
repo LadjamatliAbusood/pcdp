@@ -4,7 +4,8 @@ import AddFamilyMemberModal from './components/AddFamilyMemberModal.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import TextInputField from '@/Components/TextInputField.vue';
-import {genderOptions,relationshipOptions,CivilStatusOptions,EducationOptions,dataHealth} from '@/Constant/Choices.js'
+import Image from 'primevue/image';
+import { genderOptions, relationshipOptions, CivilStatusOptions, EducationOptions, dataHealth } from '@/Constant/Choices.js'
 const props = defineProps({
     form: Object,
     prevStep: Function,
@@ -92,58 +93,12 @@ const getSexLabel = (value) => {
     return options.find(opt => opt.value === value)?.label || 'N/A';
 };
 
-const calculateAge = (birthdate) => {
-    if (!birthdate) return 'N/A';
-    const birthDate = new Date(birthdate);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return age;
-};
 
-const startCamera = async (index) => {
-    form.family_members[index].showCamera = true;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    cameraStreams[index] = stream;
-
-    if (videoRefs[index]) {
-        videoRefs[index].srcObject = stream;
-    }
-};
-const stopCamera = (index) => {
-    form.family_members[index].showCamera = false;
-
-    if (cameraStreams[index]) {
-        cameraStreams[index].getTracks().forEach(t => t.stop());
-        cameraStreams[index] = null;
-    }
-};
-const capturePhoto = (index) => {
-    const video = videoRefs[index];
-    const canvas = canvasRefs[index];
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-        const file = new File([blob], `member_${index}.jpg`, { type: "image/jpeg" });
-        const previewUrl = URL.createObjectURL(blob);
-
-        form.family_members[index].fam_img = file;
-        form.family_members[index].fam_img_preview = previewUrl;
-        form.family_members[index].showCamera = false;
-
-        stopCamera(index);
-    }, "image/jpeg", 0.95);
-};
 
 const getHealthColor = (status) => {
     const match = dataHealth.find(item => item.value === status);
-    return match ? match.color : '#475569'; 
+    return match ? match.color : '#475569';
 };
 
 </script>
@@ -176,108 +131,104 @@ const getHealthColor = (status) => {
                     <Card class="mt-2 shadow-lg" header="User Details" v-for="(member, index) in form.family_members"
                         :key="index">
                         <template #content>
-                         <div class="flex gap-4 items-start">
-    <!-- Left: User Details -->
-    <div class="flex-1 space-y-2">
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Full Name:</label>
-            <div class="col-span-2">
-                {{ member.firstname }}, {{ member.lastname }} {{ member.middlename }}{{ member.extensionname }}
-            </div>
-        </div>
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Sex:</label>
-            <div class="col-span-2">{{ getSexLabel(member.sex) }}</div>
-        </div>
-       
-        
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Civil Status:</label>
-            <div class="col-span-2">{{ member.civil_status }}</div>
-        </div>
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Relationship:</label>
-            <div class="col-span-2">{{ member.relationship }}</div>
-        </div>
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Education:</label>
-            <div class="col-span-2">{{ getEducationLabel(member.education_attainment) }}</div>
-        </div>
-        <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Skills/Occupation:</label>
-            <div class="col-span-2">{{ member.skills_and_occupation }}</div>
-        </div>
+                            <div class="flex gap-4 items-start">
+                                <!-- Left: User Details -->
+                                <div class="flex-1 space-y-2">
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Full Name:</label>
+                                        <div class="col-span-2">
+                                            {{ member.firstname }}, {{ member.lastname }} {{ member.middlename }}{{
+                                                member.extensionname }}
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Sex:</label>
+                                        <div class="col-span-2">{{ getSexLabel(member.sex) }}</div>
+                                    </div>
 
 
-         <div class="grid grid-cols-3 gap-3 items-start py-1">
-            <label class="font-medium text-gray-700">Est. Monthly Income</label>
-            <div class="col-span-2">{{ member.estimated_income_foriegn  }}
-                {{ member.estimated_code_currency  }} |
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Civil Status:</label>
+                                        <div class="col-span-2">{{ member.civil_status }}</div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Relationship:</label>
+                                        <div class="col-span-2">{{ member.relationship }}</div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Education:</label>
+                                        <div class="col-span-2">{{ getEducationLabel(member.education_attainment) }}
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Skills/Occupation:</label>
+                                        <div class="col-span-2">{{ member.skills_and_occupation }}</div>
+                                    </div>
 
-                {{ member.estimated_income_local  }}
-                {{ member.estimated_code }}
-            </div>
-        </div>
+
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Est. Monthly Income</label>
+                                        <div class="col-span-2">{{ member.estimated_income_foriegn }}
+                                            {{ member.estimated_code_currency }} |
+
+                                            {{ member.estimated_income_local }}
+                                            {{ member.estimated_code }}
+                                        </div>
+                                    </div>
 
 
-         <div class="grid grid-cols-3 gap-3 items-start py-1">
-    <label class="font-medium text-gray-700">Health Status</label>
-    <div class="col-span-2 flex items-center gap-2">
-        <span 
-            v-if="member.health_status"
-         
-            class="w-3 h-3 rounded-full flex-shrink-0" 
-            :style="{ backgroundColor: getHealthColor(member.health_status) }"
-        ></span>
-        
-        <span class="text-gray-700">
-            {{ member.health_status || 'N/A' }}
-        </span>
-    </div>
-</div>
-    </div>
+                                    <div class="grid grid-cols-3 gap-3 items-start py-1">
+                                        <label class="font-medium text-gray-700">Health Status</label>
+                                        <div class="col-span-2 flex items-center gap-2">
+                                            <span v-if="member.health_status" class="w-3 h-3 rounded-full flex-shrink-0"
+                                                :style="{ backgroundColor: getHealthColor(member.health_status) }"></span>
 
-    <!-- Right: Photo / Camera -->
+                                            <span class="text-gray-700">
+                                                {{ member.health_status || 'N/A' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Photo / Camera -->
+                              <div class="flex flex-col items-center gap-2">
     <div class="flex flex-col items-center gap-2">
-        <!-- Show preview if captured -->
-        <img v-if="member.fam_img_preview && !member.showCamera"
-            :src="member.fam_img_preview"
-            class="w-32 h-32 object-cover rounded border" />
-
-        <!-- Camera View -->
-        <div v-if="member.showCamera" class="space-y-2">
-            <video :ref="el => videoRefs[index] = el" autoplay playsinline
-                class="w-48 h-36 bg-black rounded"></video>
-
-            <canvas :ref="el => canvasRefs[index] = el" width="400" height="300"
-                class="hidden"></canvas>
-
-            <div class="flex gap-2">
-                <button @click="capturePhoto(index)"
-                    class="px-3 py-1 bg-blue-700 text-white rounded text-sm">
-                    Capture
-                </button>
-
-                <button @click="stopCamera(index)"
-                    class="px-3 py-1 bg-gray-500 text-white rounded text-sm">
-                    Close
-                </button>
-            </div>
+        
+        <div v-if="member.fam_img_front_preview" class="relative">
+            <Image 
+                :src="member.fam_img_front_preview" 
+                alt="Front View"
+                imageClass="w-24 h-24 object-cover rounded border shadow-sm"
+                preview 
+            />
         </div>
 
-        <!-- Show open camera button -->
-        <button v-if="!member.showCamera"
-            @click="startCamera(index)"
-            class="px-3 py-1 bg-blue-700 text-white rounded text-sm">
-            Take Photo
-        </button>
+        <div class="flex flex-row gap-2">
+            <div v-if="member.fam_img_left_preview" class="flex flex-col items-center">
+                <Image 
+                    :src="member.fam_img_left_preview" 
+                    alt="Left Profile" 
+                    imageClass="w-12 h-12 object-cover rounded border shadow-sm"
+                    preview 
+                />
+                <span class="text-[8px] text-gray-400 uppercase">Left</span>
+            </div>
 
-        <!-- Validation message -->
-        <p v-if="!member.fam_img && !member.showCamera" class="text-red-600 text-sm mt-1">
-            Photo is required
-        </p>
+            <div v-if="member.fam_img_right_preview" class="flex flex-col items-center">
+                <Image 
+                    :src="member.fam_img_right_preview" 
+                    alt="Right Profile"
+                    imageClass="w-12 h-12 object-cover rounded border shadow-sm" 
+                    preview 
+                />
+                <span class="text-[8px] text-gray-400 uppercase">Right</span>
+            </div>
+        </div>
     </div>
+
+    
 </div>
+                            </div>
 
                         </template>
 

@@ -45,7 +45,7 @@ class IdentifyingInformationController extends Controller
             'address_in_ph_brgy' => ['required', 'max:225'],
             'address_in_ph_street' => ['max:225'],
             'address_in_ph_house_no' => ['max:225'],
-            'address_in_malaysia' => ['required', 'max:225'],
+            'address_in_malaysia' => ['nullable', 'max:225'],
             'education_attainment' => ['required', 'in:1,2,3,4,5'],
             'eligibility' => ['max:225'],
             'eligibility_date_acquired' => ['nullable', 'required_with:eligibility', 'date'],
@@ -63,7 +63,9 @@ class IdentifyingInformationController extends Controller
         // Step 1: Family Composition 
         1 => [
             'family_members' => ['nullable', 'array'],
-            'family_members.*.fam_img' => ['file', 'nullable', 'max:5120'], 
+          'family_members.*.fam_img_front' => ['required', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'family_members.*.fam_img_left'  => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'family_members.*.fam_img_right' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
             'family_members.*.nickname' => ['nullable', 'max:255'],
             'family_members.*.firstname' => ['required', 'max:225'],
             'family_members.*.middlename' => ['nullable', 'max:225'],
@@ -83,9 +85,11 @@ class IdentifyingInformationController extends Controller
         ],
 
         2 => [
+          
 
             'client_category_id' => ['required', 'exists:clients_category,id'],
-            'typeofclient' => ['required', 'max:225'],
+            // 'typeofclient' => ['required', 'max:225'],
+            'other_category' => ['nullable', 'string'],
             'id_presented' => ['required', 'max:225'],
             'length_stay_in_malaysia' => ['required', 'max:225'],
             'length_stay_in_malaysia_options' => ['required', 'in:1,2,3,4'],
@@ -180,7 +184,19 @@ class IdentifyingInformationController extends Controller
         }
 
         if ($stepIndex === 2) {
+
+            $othersId = DB::table('clients_category')
+            ->whereRaw('LOWER(category) = ?', ['others'])
+            ->value('id');
+
+            $rules['other_category'] = [
+            'nullable', 
+            'string', 
+            'max:225', 
+            'required_if:client_category_id,' . $othersId
+        ];
             $messages = [
+                'other_category.required_if' => 'Please specify the client category.',
                 'valid_paper_type.required_if' => 'Select Types of with valid papers options.',
                 'client_plan.required' => 'Please select the client\'s plan (Return or Remain).',
                 'client_plan.in' => 'The selected client plan is invalid.',
@@ -265,17 +281,19 @@ class IdentifyingInformationController extends Controller
             $categoryCase->ClientServices()->create($servicesData);
 
             // 6. Family members
-            foreach ($familyData as $member) {
-                $imagePath = null;
-                if (isset($member['fam_img']) && $member['fam_img'] instanceof UploadedFile) {
-                    $imagePath = $member['fam_img']->store('family_images', 'public');
-                }
+         // 6. Family members
+          foreach ($familyData as $member) {
+    // 1. Process images: Store file if it exists, otherwise keep existing value or null
+    foreach (['fam_img_front', 'fam_img_left', 'fam_img_right'] as $imgKey) {
+        if (isset($member[$imgKey]) && $request->hasFile("family_members.*.$imgKey")) {
+             // Store the file and overwrite the array value with the path string
+            $member[$imgKey] = $member[$imgKey]->store('family_images', 'public');
+        }
+    }
 
-                $member['client_category_case_id'] = $categoryCase->id;
-                $member['fam_img'] = $imagePath;
-
-                $categoryCase->ClientFamilyMembers()->create($member);
-            }
+    // 2. Create the record
+    $categoryCase->ClientFamilyMembers()->create($member);
+}
 
             DB::commit();
 

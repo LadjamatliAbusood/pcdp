@@ -50,6 +50,15 @@ const displayFields = computed(() => {
     const s = activeSource.value.client_info || {};
 
     const fields = [
+        {
+            label: 'Photos',
+            type: 'image',
+            value: {
+                front: s.photo_front,
+                left: s.photo_left,
+                right: s.photo_right,
+            }
+        },
         { label: 'Nickname', value: s.nickname || '' },
         { label: 'First Name', value: s.firstname || '' },
         { label: 'Middle Name', value: s.middlename || '' },
@@ -117,8 +126,18 @@ const familyMembersData = computed(() => {
     if (!selectedIntake.value?.family_members?.length) return [];
 
     return selectedIntake.value.family_members.map((m) => ({
-        fam_img: m.fam_img, // ✅ attach image here
+        // fam_img: m.fam_img_front,
+        
         fields: [
+              {
+            label: 'Photos',
+            type: 'image',
+            value: {
+                front: m.fam_img_front,
+                left: m.fam_img_left,
+                right: m.fam_img_right,
+            }
+        },
             { label: 'Nickname', value: m.nickname || '' },
             { label: 'First Name', value: m.firstname || '' },
             { label: 'Middle Name', value: m.middlename || '' },
@@ -182,11 +201,14 @@ const lengthOptionMap = {
 
 const assessmentFields = computed(() => {
     const s = selectedIntake.value?.assessment;
-    if (!s) return [];
+    const intake = selectedIntake.value;
+ if (!s || !intake) return [];
 
     const fields = [
-        { label: 'Type of Client', value: s.typeofclient || '' },
+       
         { label: 'ID Presented', value: s.id_presented || '' },
+         { label: 'Type of Client',value: selectedIntake.value?.category || 'N/A'
+        },
 
         {
             label: 'Length of Stay in Malaysia',
@@ -213,11 +235,12 @@ const assessmentFields = computed(() => {
     if (s.valid_paper_type) {
         fields.push(
             { label: 'Valid Paper Type', value: s.valid_paper_type },
-            { label: 'Employment Status', value: s.client_employeed || '' }
+          
         );
     }
 
     fields.push(
+          { label: 'Was the client employed?', value: s.client_employeed || '' },
         { label: 'Nature of Work', value: s.nature_of_work || '' },
         { label: 'Position Title', value: s.position_title || '' },
         { label: 'Employer Info', value: s.name_and_address_of_employee || '' },
@@ -228,15 +251,22 @@ const assessmentFields = computed(() => {
         { label: 'Passport / IC No', value: s.passport_ic_no || '' },
         { label: 'Client Problem', value: s.client_problem || '' },
         { label: 'Client Plan', value: ClientPlan(s.client_plan) },
-        { label: 'Client Reason', value: s.client_reason || '' },
-        { label: 'Client Employment', value: s.client_employment || '' },
+  
+            ...(ClientPlan(s.client_plan) === 'Return to Malaysia'
+                ? [{ label: 'Client Reason', value: s.client_reason || '' }]
+                : ClientPlan(s.client_plan) === 'Remain in the Philippines'
+                    ? [{ label: 'Client Employment', value: s.client_employment || '' }]
+                    : []
+            ),
+
+
         { label: 'Full Name', value: s.contact_person_fullname || '' },
         { label: 'Phone Number', value: s.contact_person_phonenumber || '' },
         { label: 'Relationship', value: s.contact_person_relationship || '' }
     );
 
-    //   return fields;
-    return fields.filter(f => f.value !== null && f.value !== undefined && f.value !== '');
+      return fields;
+    // return fields.filter(f => f.value !== null && f.value !== undefined && f.value !== '');
 
 });
 
@@ -426,79 +456,161 @@ const getFamilyImage = (path) => {
                 </TabList>
 
                 <TabPanels class="!p-0">
-                  <TabPanel value="0">
-    <div class=" mt-4">
+   <TabPanel value="0">
+    <div class="mt-4">
         <div class="flex border-gray-50 pb-1">
             <span class="w-1/3 text-gray-700 font-bold text-sm">Case No.</span>
-            <span class="w-2/3 text-sm  ">
+            <span class="w-2/3 text-sm text-gray-700">
                 {{ rowData?.display_case_no }}
             </span>
         </div>
 
-        <template v-for="item in displayFields" :key="item.label">
-            <div class="flex border-gray-50 pb-1">
-                <span class="w-1/3 text-gray-700 font-bold text-sm">{{ item.label }}</span>
-                <span class="w-2/3 text-sm">{{ item.value }}</span>
+        <div class="flex items-start">
+            <div class="flex-1">
+                <template v-for="item in displayFields" :key="item.label">
+                    <div v-if="item.type !== 'image'" class="flex py-1 items-start">
+                        <span class="w-1/2 text-gray-700 font-bold text-sm">
+                            {{ item.label }}
+                        </span>
+                        <span class="w-2/3 text-sm text-gray-700">
+                            {{ item.value || 'N/A' }}
+                        </span>
+                    </div>
+
+                    <Divider 
+                        v-if="item.label === 'Sex'" 
+                        class="!my-2 -mr-[136px] relative z-10" 
+                    />
+                </template>
             </div>
 
-            <Divider v-if="item.label === 'Sex'" class="!my-2" />
-        </template>
+            <div class="ml-6 shrink-0 flex flex-col items-center gap-2">
+                <template v-for="item in displayFields" :key="item.label">
+                    <div v-if="item.type === 'image'" class="flex flex-col items-center gap-2">
+                        
+                        <div class="relative">
+                            <Image
+                                v-if="item.value.front"
+                                :src="getFamilyImage(item.value.front)"
+                                class="w-24 h-24 rounded-md object-cover border border-gray-200 shadow-sm"
+                                preview
+                            />
+                            <div v-else class="w-24 h-24 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] text-center p-2">
+                                No Front View
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <div>
+                                <Image
+                                    v-if="item.value.left"
+                                    :src="getFamilyImage(item.value.left)"
+                                    class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                    preview
+                                />
+                                <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                    Left
+                                </div>
+                            </div>
+
+                            <div>
+                                <Image
+                                    v-if="item.value.right"
+                                    :src="getFamilyImage(item.value.right)"
+                                    class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                    preview
+                                />
+                                <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                    Right
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </template>
+            </div>
+        </div>
     </div>
 </TabPanel>
 
-        <TabPanel value="1">
+<TabPanel value="1">
     <div class="space-y-4 mt-2">
-       <div
-  v-for="(member, index) in familyMembersData"
-  :key="index"
-  class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm"
->
-    <div class="flex justify-between gap-4">
+        
+        <div
+            v-for="(member, index) in familyMembersData"
+            :key="index"
+            class="border border-gray-100 rounded-lg p-4 bg-white shadow-sm"
+        >
+            <div class="flex items-start">
+                <div class="flex-1">
+                    <template v-for="item in member.fields" :key="item.label">
+                        <div v-if="item.type !== 'image'" class="flex py-1 items-start">
+                            <span class="w-1/2 text-gray-700 font-bold text-sm">
+                                {{ item.label ||  'N/A'}}
+                            </span>
+                            
+                            <div class="w-2/3 flex items-center gap-2">
+                                <div
+                                    v-if="item.label === 'Health Status' && item.value"
+                                    :style="{ backgroundColor: getHealthColor(item.value) }"
+                                    class="w-3 h-3 rounded-full shrink-0"
+                                ></div>
+                                <span class="text-sm text-gray-700">
+                                    {{ item.value || 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
 
-        <div class="flex-1">
-            <div
-              v-for="item in member.fields"
-              :key="item.label"
-              class="flex items-center pb-1"
-            >
-                <span class="w-1/3 font-bold text-sm text-gray-700">
-                    {{ item.label }}
-                </span>
+                       
+                    </template>
+                </div>
 
-                <div class="flex items-center gap-2">
-                    <div
-                        v-if="item.label === 'Health Status'"
-                        :style="{ backgroundColor: getHealthColor(item.value) }"
-                        class="w-3 h-3 rounded-full"
-                    ></div>
+                <div class="ml-6 shrink-0 flex flex-col items-center gap-2">
+                    <template v-for="item in member.fields" :key="item.label">
+                        <div v-if="item.type === 'image'" class="flex flex-col items-center gap-2">
+                            
+                            <div class="relative">
+                                <Image
+                                    v-if="item.value.front"
+                                    :src="getFamilyImage(item.value.front)"
+                                    class="w-24 h-24 rounded-md object-cover border border-gray-200 shadow-sm"
+                                    preview
+                                />
+                                <div v-else class="w-24 h-24 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] text-center p-2">
+                                    No Front View
+                                </div>
+                            </div>
 
-                    <span class="text-sm text-gray-700">
-                        {{ item.value || '' }}
-                    </span>
+                            <div class="flex gap-2">
+                                <div>
+                                    <Image
+                                        v-if="item.value.left"
+                                        :src="getFamilyImage(item.value.left)"
+                                        class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                        preview
+                                    />
+                                    <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                        Left
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Image
+                                        v-if="item.value.right"
+                                        :src="getFamilyImage(item.value.right)"
+                                        class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                        preview
+                                    />
+                                    <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                        Right
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
-
-        <div class="shrink-0">
-          <Image 
-  v-if="member.fam_img"
-  :src="getFamilyImage(member.fam_img)"
-  alt="Family Member"
-  class="w-24 h-24 rounded-md object-cover border border-gray-200 shadow-sm"
-  preview 
-/>
-
-            <div
-                v-else
-                class="w-24 h-24 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] text-center p-2"
-            >
-                No Image
-            </div>
-        </div>
-
-    </div>
-</div>
-
 
         <p v-if="!familyMembersData.length" class="italic text-gray-400">No records.</p>
     </div>
@@ -511,8 +623,8 @@ const getFamilyImage = (path) => {
                                     <h1 class="text-lg font-bold col-span-3 my-2 ">Contact Person in the Philippines
                                     </h1>
                                 </template>
-                                <span class="font-bold text-sm text-gray-700">{{ item.label }}</span>
-                                <span class="col-span-2 text-sm">{{ item.value }}</span>
+                                <span class=" font-bold text-sm text-gray-700">{{ item.label }}</span>
+                                <span class="  col-span-2 text-sm">{{ item.value || 'N/A' }}</span>
                             </div>
                             <p v-if="!assessmentFields.length" class="italic text-gray-400">
                                 No additional assessment info available.
@@ -523,10 +635,10 @@ const getFamilyImage = (path) => {
                     <TabPanel value="3">
                         <div class="mt-4 space-y-2">
                             <div v-for="item in serviceFields" :key="item.label" class="flex pb-1">
-                                <span class="w-1/3 font-bold text-sm text-gray-700">{{ item.label }}</span>
+                                <span class="w-1/2 font-bold text-sm text-gray-700">{{ item.label  }}</span>
                                 <span class="w-2/3 text-sm">
                                     <div v-for="(v, i) in item.value" :key="i">
-                                        {{ v }}
+                                        {{ v }} 
                                     </div>
                                 </span>
                             </div>
@@ -536,14 +648,71 @@ const getFamilyImage = (path) => {
             </Tabs>
 
             <div v-else class="space-y-2">
+              <div class="flex items-start">
+            <div class="flex-1">
                 <template v-for="item in displayFields" :key="item.label">
-                    <div class="flex">
-                        <span class="w-1/3 text-gray-700 font-bold text-sm">{{ item.label }}</span>
-                        <span class="w-2/3 text-sm">{{ item.value }}</span>
+                    <div v-if="item.type !== 'image'" class="flex py-1 items-start">
+                        <span class="w-1/2 text-gray-700 font-bold text-sm">
+                            {{ item.label }}
+                        </span>
+                        <span class="w-2/3 text-sm text-gray-700">
+                            {{ item.value || 'N/A' }}
+                        </span>
                     </div>
 
-                    <Divider v-if="item.label === 'Sex'" class="!my-2" />
+                    <Divider 
+                        v-if="item.label === 'Sex'" 
+                        class="!my-2 -mr-[136px] relative z-10" 
+                    />
                 </template>
+            </div>
+
+            <div class="ml-6 shrink-0 flex flex-col items-center gap-2">
+                <template v-for="item in displayFields" :key="item.label">
+                    <div v-if="item.type === 'image'" class="flex flex-col items-center gap-2">
+                        
+                        <div class="relative">
+                            <Image
+                                v-if="item.value.front"
+                                :src="getFamilyImage(item.value.front)"
+                                class="w-24 h-24 rounded-md object-cover border border-gray-200 shadow-sm"
+                                preview
+                            />
+                            <div v-else class="w-24 h-24 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[10px] text-center p-2">
+                                No Front View
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <div>
+                                <Image
+                                    v-if="item.value.left"
+                                    :src="getFamilyImage(item.value.left)"
+                                    class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                    preview
+                                />
+                                <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                    Left
+                                </div>
+                            </div>
+
+                            <div>
+                                <Image
+                                    v-if="item.value.right"
+                                    :src="getFamilyImage(item.value.right)"
+                                    class="w-[52px] h-12 rounded-md object-cover border border-gray-200 shadow-sm"
+                                    preview
+                                />
+                                <div v-else class="w-[52px] h-12 rounded-md bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px]">
+                                    Right
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </template>
+            </div>
+        </div>
 
                 <Divider class="my-6" />
 
@@ -551,7 +720,7 @@ const getFamilyImage = (path) => {
                 </section>
 
 
-                <Divider class="my-6" />
+               
                 <section>
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="font-bold">History of Intakes</h3>

@@ -198,16 +198,19 @@ onMounted(() => {
 
 function clearDraft() {
   localStorage.removeItem(FORM_STORAGE_KEY)
+    localStorage.removeItem('unfinishedClientForm');
+  localStorage.removeItem('unfinishedClientFormPhotos');
   hasDraft.value = false
 
   notify.success('Draft cleared')
 }
 
 function continueDraft() {
-  const draft = localStorage.getItem(FORM_STORAGE_KEY)
-  if (!draft) return
-  const encoded = encodeURIComponent(draft)
-  router.visit(route('new-client', { prefill: encoded }))
+  // const draft = localStorage.getItem(FORM_STORAGE_KEY)
+  // if (!draft) return
+  // const encoded = encodeURIComponent(draft)
+  // router.visit(route('new-client', { prefill: encoded }))
+  router.visit(route('new-client'));
 }
 </script>
 <template>
@@ -329,10 +332,16 @@ function continueDraft() {
         <span class="ml-2 block text-md font-medium">Continue with Draft</span>
       </Button>
     </div>
-    <div v-else>
+    <div v-else class="space-x-4">
+      
   <Button severity="info" variant="outlined"  @click="resetEnrollment">
         <i class="pi pi-refresh" ></i>
         <span class="ml-2 block text-md font-medium">Reset & Restart Scan</span>
+      </Button>
+            <Button @click="handleFillFromScratch"
+        severity="secondary" variant="outlined">
+          <i class="pi pi-file" ></i>
+        <span class="ml-2 block text-md font-medium">Fill up from scratch</span>
       </Button>
     </div>
     

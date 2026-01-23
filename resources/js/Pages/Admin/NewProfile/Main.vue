@@ -63,11 +63,12 @@ const form = useForm({
     family_members: [],
 
     client_category_id: null,
-    typeofclient: null,
+    other_category:null,
+    //typeofclient: null,
     id_presented: null,
     length_stay_in_malaysia: null,
     length_stay_in_malaysia_options: null,
-    additional_length_option_if_with_years: null, // weeks or months
+    additional_length_option_if_with_years: null, 
     length_value_if_with_years: null,
     client_went_malaysia: null,
     valid_paper_type:null,
@@ -98,59 +99,82 @@ const addFamilyMember = (newMember) => {
 // LocalStorage backup
 const FORM_STORAGE_KEY = 'unfinishedClientForm';
 watch(form, (newForm) => {
-    if (Object.values(newForm).some(v => v !== null && v !== '' && !(Array.isArray(v) && v.length === 0))) {
-        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify({ ...newForm, attempt: attempt.value }));
+    // 1. Create a deep copy
+    const formToSave = JSON.parse(JSON.stringify(newForm));
+    
+    // 2. Remove File objects from main photos (keep previews if they exist)
+    delete formToSave.photo_front;
+    delete formToSave.photo_left;
+    delete formToSave.photo_right;
+
+    // 3. Clean family members images
+    if (formToSave.family_members) {
+        formToSave.family_members = formToSave.family_members.map(member => {
+            // Remove the actual File objects which can't be stringified
+            delete member.fam_img_front;
+            delete member.fam_img_left;
+            delete member.fam_img_right;
+            return member;
+        });
+    }
+
+    if (Object.values(formToSave).some(v => v !== null && v !== '')) {
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify({ ...formToSave, attempt: attempt.value }));
     }
 }, { deep: true });
 
+const dataURLtoFile = (dataurl, filename) => {
+    if (!dataurl || !dataurl.includes('base64')) return null;
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length, u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+};
+// Main.vue
 onMounted(() => {
-    // Restore unfinished form first (always prioritized)
+    // 1. Priority 1: Check LocalStorage (Draft)
     const savedForm = localStorage.getItem(FORM_STORAGE_KEY);
     if (savedForm) {
         const parsed = JSON.parse(savedForm);
         attempt.value = parsed.attempt || 1;
 
+        // Restore standard fields
         Object.keys(parsed).forEach(key => {
             if (key in form) form[key] = parsed[key];
         });
 
+        // Restore Family Photos from previews
+        if (form.family_members) {
+            form.family_members.forEach(member => {
+                if (member.fam_img_front_preview) 
+                    member.fam_img_front = dataURLtoFile(member.fam_img_front_preview, 'front.png');
+                if (member.fam_img_left_preview) 
+                    member.fam_img_left = dataURLtoFile(member.fam_img_left_preview, 'left.png');
+                if (member.fam_img_right_preview) 
+                    member.fam_img_right = dataURLtoFile(member.fam_img_right_preview, 'right.png');
+            });
+        }
         notify.info('Restored unfinished form');
-        return;
+        return; // Exit here if we found a draft
     }
 
-    // READ PREFILL FROM URL (from Result.vue)
+    // 2. Priority 2: Check URL (Only for matching results, usually contains no images)
     const urlParams = new URLSearchParams(window.location.search);
     const prefill = urlParams.get('prefill');
-    if (!prefill) return;
-
-    try {
-        // Decode the flat data object
-        const decoded = JSON.parse(decodeURIComponent(prefill));
-
-        // =================================================================
-        // *** CRITICAL FIX: Direct Assignment from FLAT Data ***
-        // =================================================================
-
-        // The data is already flattened, so we iterate over the decoded object.
-        Object.keys(decoded).forEach(key => {
-            if (key in form && decoded[key] !== null) {
-                // Ensure date strings are converted to Date objects for date pickers
-                if (['birthdate', 'eligibility_date_acquired', 'date_issued'].includes(key) && typeof decoded[key] === 'string') {
-                    form[key] = new Date(decoded[key]);
-                } else if (key === 'education_attainment') {
-                    form[key] = Number(decoded[key]);
-                } else {
-                    form[key] = decoded[key];
+    if (prefill) {
+        try {
+            const decoded = JSON.parse(decodeURIComponent(prefill));
+            Object.keys(decoded).forEach(key => {
+                if (key in form && decoded[key] !== null) {
+                    // Date and Number formatting logic...
+                    form[key] = decoded[key]; 
                 }
-            }
-        });
-
-        attempt.value += 1;
-
-        notify.info('Previous client data loaded and ready to edit');
-    } catch (e) {
-        console.error('Prefill decode failed', e);
-        notify.error('Failed to load previous client data.');
+            });
+            notify.info('Previous client data loaded');
+        } catch (e) {
+            console.error('Prefill failed', e);
+        }
     }
 });
 
@@ -166,6 +190,7 @@ const steps = [
 
 const activeStep = ref(0);
 const components = [
+    
     StepIdentifyingInfo,
     StepFamilyComposition,
     StepAssessment,
@@ -192,6 +217,7 @@ const submitForm = (event) => {
             form.post(route('deportees.store'), {
                 onSuccess: (response) => {
                     localStorage.removeItem(FORM_STORAGE_KEY);
+                    localStorage.removeItem('unfinishedClientFormPhotos')
                     const id = response.props.client.id;
                     notify.success(`Form submitted successfully`);
                     router.visit(route('client.show', id));
@@ -215,7 +241,12 @@ function handleNextStep() {
         return;
     }
 
-
+if (activeStep.value === 0) {
+        if (!form.photo_front ) {
+            notify.error('Required: Please capture client photos before proceeding.');
+            return; // Stop here, don't even call the server
+        }
+    }
     form.post(route('validate-step', { step: activeStep.value }), {
         preserveState: true,
         preserveScroll: true,

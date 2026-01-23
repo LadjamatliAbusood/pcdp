@@ -12,7 +12,9 @@ class ClientFamInfoModel extends Model
 
     protected $fillable = [
         'client_category_case_id',
-        'fam_img',
+        'fam_img_front',
+        'fam_img_left',
+        'fam_img_right',
         'nickname', 
         'firstname', 
         'middlename',

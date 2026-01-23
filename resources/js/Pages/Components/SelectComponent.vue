@@ -62,7 +62,7 @@ watch(selectedValue, (newValue) => {
         :disabled="disableSelect"
         optionLabel="label"
         optionValue="value"
-        class="w-full"
+        class="w-full font-semibold rounded-lg block"
       />
       <small class="text-sm font-semibold text-red-500" v-if="message">{{ message }}</small>
     </div>

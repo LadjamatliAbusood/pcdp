@@ -13,7 +13,8 @@ class ClientAssessmentModel extends Model
 
     protected $fillable = [
         'client_category_case_id',
-        'typeofclient',
+        'other_category',
+        // 'typeofclient',
         'id_presented',
         'length_stay_in_malaysia',
         'length_stay_in_malaysia_options',
